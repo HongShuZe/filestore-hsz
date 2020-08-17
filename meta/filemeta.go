@@ -53,7 +53,7 @@ func RemoveFileMeta(fileSha1 string)  {
 // 从mysql获取文件元信息
 func GetFileMetaDB(fileSha1 string) (FileMeta, error) {
 	tfile, err := mydb.GetFileMeta(fileSha1)
-	if err != nil {
+	if err != nil || tfile == nil {
 		return FileMeta{}, err
 	}
 
@@ -67,6 +67,24 @@ func GetFileMetaDB(fileSha1 string) (FileMeta, error) {
 }
 
 // 批量从mysql获取文件元信息
+func GetLastFileMetaDB(limit int) ([]FileMeta, error) {
+	tfiles, err := mydb.GetFileMetaList(limit)
+	if err != nil {
+		return make([]FileMeta, 0), err
+	}
+
+	tfilesm := make([]FileMeta, len(tfiles))
+	for i := 0; i < len(tfilesm); i++ {
+		tfilesm[i] = FileMeta{
+			FileSha1: tfiles[i].FileHash,
+			FileName: tfiles[i].FileName.String,
+			FileSize: tfiles[i].FileSize.Int64,
+			Location: tfiles[i].FileAddr.String,
+		}
+	}
+
+	return tfilesm, nil
+}
 
 // 新增/更新文件元信息到mysql中
 func UpdateFileMetaDB(fmeta FileMeta) bool {
@@ -75,6 +93,9 @@ func UpdateFileMetaDB(fmeta FileMeta) bool {
 }
 
 // 删除文件
+func OnFileRemovedDB(filehash string) bool {
+	return mydb.OnFileRemoved(filehash)
+}
 
 
 

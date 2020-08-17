@@ -63,8 +63,74 @@ func GetFileMeta(filehash string) (*TableFile, error) {
 }
 
 // 文件是否已经上传
+func IsFileUploaded(filehash string) bool {
+	stmt, err := mydb.DBConn().Prepare(
+		"select 1 from tbl_file where file_sha1=? and status=1 limit 1")
 
+	rows, err := stmt.Query(filehash)
+	if err != nil {
+		return false
+	}else if rows == nil || !rows.Next() {
+		return false
+	}
+	return true
+}
 // 从mysql批量获取文件元信息
+func GetFileMetaList(limit int) ([]TableFile, error) {
+	stmt, err := mydb.DBConn().Prepare(
+		"select file_sha1, file_addr, file_name, file_size from tbl_file" +
+			"where status=1 limit ?")
+	if err != nil {
+		fmt.Println(err.Error())
+		return nil, err
+	}
+	defer stmt.Close()
+
+	rows, err := stmt.Query(limit)
+	if err != nil {
+		fmt.Println(err.Error())
+		return nil, err
+	}
+
+	columns, _ := rows.Columns()
+	values := make([]sql.RawBytes, len(columns))
+	var tfiles []TableFile
+	for i := 0; i < len(values)&& rows.Next(); i++ {
+		tfile := TableFile{}
+		err = rows.Scan(&tfile.FileHash, tfile.FileAddr, tfile.FileName, tfile.FileSize)
+
+		if err != nil {
+			fmt.Println(err.Error())
+			break
+		}
+		tfiles = append(tfiles, tfile)
+	}
+	fmt.Println(len(tfiles))
+	return tfiles, nil
+
+}
 
 // 文件删除（标记删除， 即把status改为2）
+func OnFileRemoved(filehash string) bool {
+	stmt, err := mydb.DBConn().Prepare(
+		"update tbl_file set status=2 where file_sha1=? and status=1 limit 1")
+	if err != nil {
+		fmt.Println("Failed to prepare statement, err:" + err.Error())
+		return false
+	}
+	defer stmt.Close()
 
+	ret, err := stmt.Exec(filehash)
+	if err != nil {
+		fmt.Println(err.Error())
+		return false
+	}
+	if rf, err := ret.RowsAffected(); nil == err {
+		if rf <= 0 {
+			fmt.Printf("File with hash:%s not upload", filehash)
+		}
+		return true
+	}
+
+	return false
+}
