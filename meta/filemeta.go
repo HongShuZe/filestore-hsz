@@ -1,6 +1,9 @@
 package meta
 
-import "sort"
+import (
+	"sort"
+	mydb "filestore-hsz/db"
+)
 
 // 文件元信息结构
 type FileMeta struct {
@@ -46,6 +49,33 @@ func GetLastFileMetas(count int) []FileMeta {
 func RemoveFileMeta(fileSha1 string)  {
 	delete(fileMetas, fileSha1)
 }
+
+// 从mysql获取文件元信息
+func GetFileMetaDB(fileSha1 string) (FileMeta, error) {
+	tfile, err := mydb.GetFileMeta(fileSha1)
+	if err != nil {
+		return FileMeta{}, err
+	}
+
+	fmeta := FileMeta{
+		FileSha1: tfile.FileHash,
+		FileName: tfile.FileName.String,
+		FileSize: tfile.FileSize.Int64,
+		Location: tfile.FileAddr.String,
+	}
+	return fmeta, nil
+}
+
+// 批量从mysql获取文件元信息
+
+// 新增/更新文件元信息到mysql中
+func UpdateFileMetaDB(fmeta FileMeta) bool {
+	return mydb.OnFileUploadFinished(
+		fmeta.FileSha1, fmeta.FileName, fmeta.FileSize, fmeta.Location)
+}
+
+// 删除文件
+
 
 
 
