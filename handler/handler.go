@@ -11,6 +11,7 @@ import (
 	"filestore-hsz/util"
 	"encoding/json"
 	"strconv"
+	dblayer "filestore-hsz/db"
 )
 
 // 处理文件上传
@@ -56,7 +57,15 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 		//meta.UpdateFileMeta(fileMeta)
 		_ = meta.UpdateFileMetaDB(fileMeta)
 
-		http.Redirect(w, r, "/file/upload/suc", http.StatusFound)
+		//更新用户文件表记录
+		r.ParseForm()
+		username := r.Form.Get("username")
+		suc := dblayer.OnUserFileUploadFinished(username, fileMeta.FileSha1, fileMeta.FileName, fileMeta.FileSize)
+		if suc {
+			http.Redirect(w, r, "/static/view/home.html", http.StatusFound)
+		}else {
+			w.Write([]byte("Upload Failed"))
+		}
 	}
 }
 
@@ -91,14 +100,20 @@ func FileQueryHandler(w http.ResponseWriter, r *http.Request)  {
 	r.ParseForm()
 
 	limitCnt, _ := strconv.Atoi(r.Form.Get("limit"))
-	fileMetas := meta.GetLastFileMetas(limitCnt)
-	data, err := json.Marshal(fileMetas)
+	username := r.Form.Get("username")
+	//fileMetas := meta.GetLastFileMetas(limitCnt)
+	userFiles, err := dblayer.QueryUserFileMetas(username, limitCnt)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	w.Header().Set("Content-type", "application/json")
+	data, err := json.Marshal(userFiles)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	//w.Header().Set("Content-type", "application/json")
 	w.Write(data)
 }
 
@@ -106,7 +121,14 @@ func FileQueryHandler(w http.ResponseWriter, r *http.Request)  {
 func DownloadHandler(w http.ResponseWriter, r *http.Request)  {
 	r.ParseForm()
 	fsha1 := r.Form.Get("filehash")
-	fm := meta.GetFileMeta(fsha1)
+	username := r.Form.Get("username")
+
+	fm, _ := meta.GetFileMetaDB(fsha1)
+	userFile, err := dblayer.QueryUserFileMeta(username, fsha1)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 
 	f, err := os.Open(fm.Location)
 	if err != nil {
@@ -122,19 +144,21 @@ func DownloadHandler(w http.ResponseWriter, r *http.Request)  {
 	}
 
 	w.Header().Set("Content-Type", "application/octect-stream")
-	w.Header().Set("content-disposition", "attachment; filename=\""+fm.FileName+"\"")
+	// attachment表示文件将会提示下载到本地，而不是直接在浏览器中打开
+	w.Header().Set("content-disposition", "attachment; filename=\""+userFile.FileName+"\"")
 	w.Write(data)
 }
 
-// 更新元信息接口
-func FileMetaUpdatehandler(w http.ResponseWriter, r *http.Request)  {
+// 更新元信息接口(重命名)
+func FileMetaUpdateHandler(w http.ResponseWriter, r *http.Request)  {
 	r.ParseForm()
 
 	opType := r.Form.Get("op")
 	fileSha1 := r.Form.Get("filehash")
 	newFileName := r.Form.Get("fileName")
+	username := r.Form.Get("username")
 
-	if opType != "0" {
+	if opType != "0" || len(newFileName) < 1 {
 		w.WriteHeader(http.StatusForbidden)
 		return
 	}
@@ -143,18 +167,27 @@ func FileMetaUpdatehandler(w http.ResponseWriter, r *http.Request)  {
 		return
 	}
 
-	curFileMeta := meta.GetFileMeta(fileSha1)
-	curFileMeta.FileName = newFileName
-	meta.UpdateFileMeta(curFileMeta)
+	//curFileMeta := meta.GetFileMeta(fileSha1)
+	//curFileMeta.FileName = newFileName
+	//meta.UpdateFileMeta(curFileMeta)
 
-	data, err := json.Marshal(curFileMeta)
+	// 更新用户表tb_user_file中的文件名，tb_user_file文件名不用修改
+	_ = dblayer.RenameFileName(username, fileSha1, newFileName)
+	// 返回最新的文件信息
+	userFile, err := dblayer.QueryUserFileMeta(username, fileSha1)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	data, err := json.Marshal(userFile)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
-	w.Header().Set("Content-type", "application/json")
+	//w.Header().Set("Content-type", "application/json")
 	w.Write(data)
 }
 
@@ -163,16 +196,74 @@ func FileMetaUpdatehandler(w http.ResponseWriter, r *http.Request)  {
 func FileDeleteHandler(w http.ResponseWriter, r *http.Request)  {
 	r.ParseForm()
 	fileSha1 := r.Form.Get("filehash")
+	username := r.Form.Get("username")
 
-	fMeta := meta.GetFileMeta(fileSha1)
-	os.Remove(fMeta.Location)
+	// 删除本地文件
+	fm, err := meta.GetFileMetaDB(fileSha1)
+	//fMeta := meta.GetFileMeta(fileSha1)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	os.Remove(fm.Location)
 
-	meta.RemoveFileMeta(fileSha1)
-
+	// 删除用户文件表的一条记录
+	suc := dblayer.DeleteUserFile(username, fileSha1)
+	if !suc {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	//meta.RemoveFileMeta(fileSha1)
 	w.WriteHeader(http.StatusOK)
 }
 
 
+// 尝试秒传接口
+func TryFastUploadHandler(w http.ResponseWriter, r *http.Request)  {
+
+	// 1.解析请求参数
+	r.ParseForm()
+	username := r.Form.Get("username")
+	filehash := r.Form.Get("filehash")
+	filename := r.Form.Get("filename")
+	filesize, _:= strconv.Atoi(r.Form.Get("filesize"))
+
+	// 2.从文件表中查询相同hash的文件记录
+	fileMeta, err := meta.GetFileMetaDB(filehash)
+	if err != nil {
+		fmt.Println(err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// 3.查不到记录则返回秒传失败
+	if fileMeta.FileSha1 == "" {
+		resp := util.RespMsg{
+			Code: -1,
+			Msg: "秒传失败， 请访问普通上传接口",
+		}
+		w.Write(resp.JSONBytes())
+		return
+	}
+
+	// 4.上传过则将文件信息写入用户文件表
+	suc := dblayer.OnUserFileUploadFinished(
+		username, filehash, filename, int64(filesize))
+	if suc {
+		resp := util.RespMsg{
+			Code: 0,
+			Msg: "秒传成功",
+		}
+		w.Write(resp.JSONBytes())
+		return
+	}
+
+	resp := util.RespMsg{
+		Code: -2,
+		Msg: "秒传失败",
+	}
+	w.Write(resp.JSONBytes())
+}
 
 
 
