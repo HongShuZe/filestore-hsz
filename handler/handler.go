@@ -155,13 +155,14 @@ func FileMetaUpdateHandler(w http.ResponseWriter, r *http.Request)  {
 
 	opType := r.Form.Get("op")
 	fileSha1 := r.Form.Get("filehash")
-	newFileName := r.Form.Get("fileName")
+	newFileName := r.Form.Get("filename")
 	username := r.Form.Get("username")
 
 	if opType != "0" || len(newFileName) < 1 {
 		w.WriteHeader(http.StatusForbidden)
 		return
 	}
+
 	if r.Method != "POST" {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
@@ -174,6 +175,7 @@ func FileMetaUpdateHandler(w http.ResponseWriter, r *http.Request)  {
 	// 更新用户表tb_user_file中的文件名，tb_user_file文件名不用修改
 	_ = dblayer.RenameFileName(username, fileSha1, newFileName)
 	// 返回最新的文件信息
+
 	userFile, err := dblayer.QueryUserFileMeta(username, fileSha1)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
