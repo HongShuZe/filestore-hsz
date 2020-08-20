@@ -15,7 +15,7 @@ func HTTPInterceptor(h http.HandlerFunc) http.HandlerFunc {
 			token := r.Form.Get("token")
 
 			// 验证登录token是否有效
-			if len(username) < 3 || !IsTokenValid(token) {
+			if len(username) < 3 || !IsTokenValid(token, username) {
 				// token校验失败则跳转到直接返回失败提示
 				resp := util.NewRespMsg(
 					int(common.StatusInvalidToken),

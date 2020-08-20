@@ -100,3 +100,22 @@ func GetUserInfo(username string) (User, error) {
 
 	return user, nil
 }
+
+// 获取用户token
+func GetUserToken(username string) (token string) {
+
+	stmt, err := mydb.DBConn().Prepare(
+		"select user_token from tbl_user_token where user_name=? limit 1")
+	if err != nil {
+		fmt.Println(err.Error())
+		return ""
+	}
+	defer stmt.Close()
+
+	err = stmt.QueryRow(username).Scan(&token)
+	if err != nil {
+		fmt.Println(err.Error())
+		return ""
+	}
+	return token
+}

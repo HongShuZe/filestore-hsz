@@ -126,12 +126,22 @@ func GenToken(username string) string {
 }
 
 // token是否有效
-func IsTokenValid(token string) bool {
+func IsTokenValid(token, username string) bool {
 	if len(token) != 40 {
 		return false
 	}
 	// TODO 判断token的时效性， 是否过期
+	// 假设token的有效期为1天
+	tokenTS := token[:8]
+	if util.Hex2Dec(tokenTS) < time.Now().Unix()-86400 {
+		return false
+	}
+
 	// TODO 从数据库表tbl_user_token查询username对应的token信息
 	// TODO 对比两个token是否一致
+	if dblayer.GetUserToken(username) != token {
+		return false
+	}
+
 	return true
 }

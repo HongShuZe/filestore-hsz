@@ -262,7 +262,7 @@ func TryFastUploadHandler(w http.ResponseWriter, r *http.Request)  {
 
 	resp := util.RespMsg{
 		Code: -2,
-		Msg: "秒传失败",
+		Msg: "秒传失败,请重试",
 	}
 	w.Write(resp.JSONBytes())
 }
