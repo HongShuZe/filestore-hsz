@@ -18,4 +18,6 @@ const (
 	StatusLoginFailed
 	// 10005 token无效
 	StatusInvalidToken
+	// 10006 文件已存在
+	FileAlreadExists
 )
