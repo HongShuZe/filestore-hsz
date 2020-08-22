@@ -1,4 +1,4 @@
-package main
+package mpupload
 
 // 测试分块上传 (场景：上传过程中取消)
 

@@ -18,7 +18,7 @@ func main()  {
 	http.HandleFunc("/file/meta", handler.HTTPInterceptor(handler.GetFileMetaHandler))
 	http.HandleFunc("/file/query", handler.HTTPInterceptor(handler.FileQueryHandler))
 	http.HandleFunc("/file/download", handler.HTTPInterceptor(handler.DownloadHandler))
-	http.HandleFunc("/file/downloadRange", handler.HTTPInterceptor(handler.RangeDownloadHandler))
+	//http.HandleFunc("/file/downloadRange", handler.HTTPInterceptor(handler.RangeDownloadHandler))
 	http.HandleFunc("/file/update", handler.HTTPInterceptor(handler.FileMetaUpdateHandler))
 	http.HandleFunc("/file/delete", handler.HTTPInterceptor(handler.FileDeleteHandler))
 	http.HandleFunc("/file/downloadurl", handler.HTTPInterceptor(handler.DownloadURLHandler))

@@ -1,4 +1,4 @@
-package main
+package mpupload
 
 // 测试分块上传及断点续传
 

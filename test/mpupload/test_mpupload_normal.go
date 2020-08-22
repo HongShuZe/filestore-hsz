@@ -1,4 +1,4 @@
-package main
+package mpupload
 
 // 测试分块上传 (场景：正常完成上传)
 

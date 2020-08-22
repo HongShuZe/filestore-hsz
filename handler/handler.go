@@ -12,6 +12,10 @@ import (
 	"encoding/json"
 	"strconv"
 	dblayer "filestore-hsz/db"
+	cfg "filestore-hsz/config"
+	cmn "filestore-hsz/common"
+	"filestore-hsz/store/ceph"
+	"strings"
 )
 
 // 处理文件上传
@@ -35,7 +39,7 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 
 		fileMeta := meta.FileMeta{
 			FileName: head.Filename,
-			Location: "/tmp/" + head.Filename,
+			Location: cfg.TempLocalRootDir + head.Filename,
 			UploadAt: time.Now().Format("2006-01-02 15:04:05"),
 		}
 
@@ -52,6 +56,20 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		// 5.同步或异步将文件转移到Ceph/OSS
+		newFile.Seek(0, 0) // 游标重新回到文件头部
+		if cfg.CurrentStoreType == cmn.StoreCeph {
+			data, _ := ioutil.ReadAll(newFile)
+			cephPath := "/ceph/" + fileMeta.FileSha1
+			err = ceph.PutObject("userfile", cephPath, data)
+			if err != nil {
+				fmt.Println("upload ceph err: " + err.Error())
+				w.Write([]byte("Upload failed!"))
+				return
+			}
+			fileMeta.Location = cephPath
+		}
+
 		newFile.Seek(0, 0)
 		fileMeta.FileSha1 = util.FileSha1(newFile)
 		//meta.UpdateFileMeta(fileMeta)
@@ -60,10 +78,11 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 		//更新用户文件表记录
 		r.ParseForm()
 		username := r.Form.Get("username")
-		suc := dblayer.OnUserFileUploadFinished(username, fileMeta.FileSha1, fileMeta.FileName, fileMeta.FileSize)
+		suc := dblayer.OnUserFileUploadFinished(username, fileMeta.FileSha1,
+			fileMeta.FileName, fileMeta.FileSize)
 		if suc {
 			http.Redirect(w, r, "/static/view/home.html", http.StatusFound)
-		}else {
+		} else {
 			w.Write([]byte("Upload Failed"))
 		}
 	}
@@ -236,7 +255,60 @@ func TryFastUploadHandler(w http.ResponseWriter, r *http.Request)  {
 	w.Write(resp.JSONBytes())
 }
 
+// 生成文件下载地址
+func DownloadURLHandler(w http.ResponseWriter, r *http.Request) {
+	filehash := r.Form.Get("filehash")
+	username := r.Form.Get("username")
+	token := r.Form.Get("token")
+	tmpURL := fmt.Sprintf(
+		"http://%s/file/download?filehash=%s&username=%s&token=%s",
+		r.Host, filehash, username, token)
+	w.Write([]byte(tmpURL))
+}
 
+// 文件下载接口
+func DownloadHandler(w http.ResponseWriter, r *http.Request) {
+	r.ParseForm()
+	fsha1 := r.Form.Get("filehash")
+	username := r.Form.Get("username")
+
+	fm, _ := meta.GetFileMetaDB(fsha1)
+	userFile, err := dblayer.QueryUserFileMeta(username, fsha1)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	fmt.Println(fm.Location)
+	var fileData []byte
+	if strings.HasPrefix(fm.Location, cfg.TempLocalRootDir) || strings.HasPrefix(fm.Location, "/home/zwx/data/merge/") {
+		f, err := os.Open(fm.Location)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		defer f.Close()
+
+		fileData, err = ioutil.ReadAll(f)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+	}else if strings.HasPrefix(fm.Location, "/ceph") {
+		fmt.Println("to download file from ceph...")
+		bucket := ceph.GetCephBucket("userfile")
+		fileData, err = bucket.Get(fm.Location)
+		if err != nil {
+			fmt.Println(err.Error())
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/octect-stream")
+	// attachment表示文件将会提示下载到本地，而不是直接在浏览器中打开
+	w.Header().Set("content-disposition", "attachment; filename=\""+userFile.FileName+"\"")
+	w.Write(fileData)
+}
 
 
 
