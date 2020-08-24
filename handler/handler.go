@@ -16,6 +16,7 @@ import (
 	cmn "filestore-hsz/common"
 	"filestore-hsz/store/ceph"
 	"strings"
+	"filestore-hsz/store/oss"
 )
 
 // 处理文件上传
@@ -37,9 +38,10 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		defer file.Close()
 
+		tmpPath := cfg.TempLocalRootDir + head.Filename
 		fileMeta := meta.FileMeta{
 			FileName: head.Filename,
-			Location: cfg.TempLocalRootDir + head.Filename,
+			Location: tmpPath,
 			UploadAt: time.Now().Format("2006-01-02 15:04:05"),
 		}
 
@@ -56,8 +58,12 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		newFile.Seek(0, 0)
+		fileMeta.FileSha1 = util.FileSha1(newFile)
+
 		// 5.同步或异步将文件转移到Ceph/OSS
 		newFile.Seek(0, 0) // 游标重新回到文件头部
+		mergePath := cfg.MergeLocalRootDir + fileMeta.FileSha1
 		if cfg.CurrentStoreType == cmn.StoreCeph {
 			data, _ := ioutil.ReadAll(newFile)
 			cephPath := "/ceph/" + fileMeta.FileSha1
@@ -68,10 +74,26 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			fileMeta.Location = cephPath
+		} else if cfg.CurrentStoreType == cmn.StoreOSS {
+			ossPath := "oss/" + fileMeta.FileSha1
+			err = oss.Bucket().PutObject(ossPath, newFile)
+			if err != nil {
+				fmt.Println("upload oss err: " + err.Error())
+				w.Write([]byte("upload failed"))
+				return
+			}
+			fileMeta.Location = ossPath
+		} else {
+			fileMeta.Location = mergePath
 		}
 
-		newFile.Seek(0, 0)
-		fileMeta.FileSha1 = util.FileSha1(newFile)
+		err = os.Rename(tmpPath, mergePath) //移动文件
+		if err != nil {
+			fmt.Println("move local file err:", err.Error())
+			w.Write([]byte("upload failed"))
+			return
+		}
+
 		//meta.UpdateFileMeta(fileMeta)
 		_ = meta.UpdateFileMetaDB(fileMeta)
 
@@ -258,12 +280,23 @@ func TryFastUploadHandler(w http.ResponseWriter, r *http.Request)  {
 // 生成文件下载地址
 func DownloadURLHandler(w http.ResponseWriter, r *http.Request) {
 	filehash := r.Form.Get("filehash")
-	username := r.Form.Get("username")
-	token := r.Form.Get("token")
-	tmpURL := fmt.Sprintf(
-		"http://%s/file/download?filehash=%s&username=%s&token=%s",
-		r.Host, filehash, username, token)
-	w.Write([]byte(tmpURL))
+	// 从文件表查找记录
+	row, _ := dblayer.GetFileMeta(filehash)
+	fmt.Println("fileAddr: "+ row.FileAddr.String)
+	if strings.HasPrefix(row.FileAddr.String, cfg.MergeLocalRootDir) || strings.HasPrefix(row.FileAddr.String, "/ceph") {
+		username := r.Form.Get("username")
+		token := r.Form.Get("token")
+		tmpURL := fmt.Sprintf(
+			"http://%s/file/download?filehash=%s&username=%s&token=%s",
+			r.Host, filehash, username, token)
+		w.Write([]byte(tmpURL))
+	} else if strings.HasPrefix(row.FileAddr.String, "oss/") {
+		signedURL := oss.DownloadURL(row.FileAddr.String)
+		w.Write([]byte(signedURL))
+	} else {
+		w.Write([]byte("Error: 下载链接暂时无法生成"))
+	}
+
 }
 
 // 文件下载接口
@@ -278,9 +311,9 @@ func DownloadHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	fmt.Println(fm.Location)
+
 	var fileData []byte
-	if strings.HasPrefix(fm.Location, cfg.TempLocalRootDir) || strings.HasPrefix(fm.Location, "/home/zwx/data/merge/") {
+	if strings.HasPrefix(fm.Location, cfg.MergeLocalRootDir)  {
 		f, err := os.Open(fm.Location)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -302,6 +335,21 @@ func DownloadHandler(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
+	}else if strings.HasPrefix(fm.Location, "oss") {
+		fmt.Println("to download file from oss...")
+
+		fd, err := oss.Bucket().GetObject(fm.Location)
+		if err != nil {
+			fileData, err = ioutil.ReadAll(fd)
+		}
+		if err != nil {
+			fmt.Println(err.Error())
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+	}else {
+		w.Write([]byte("file not found"))
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/octect-stream")

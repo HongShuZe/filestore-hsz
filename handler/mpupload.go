@@ -14,6 +14,8 @@ import (
 	"strings"
 	"math"
 	"path"
+
+	cfg "filestore-hsz/config"
 )
 
 // 初始化信息
@@ -29,9 +31,9 @@ type MultipartUploadInfo struct {
 
 const (
 	// 上传分块所在位置
-	ChunkDir = "/home/zwx/data/chunks/"
+	ChunkDir = cfg.ChunckLocalRootDir
 	// 合并后的文件所在目录
-	MergeDir = "/home/zwx/data/merge/"
+	MergeDir = cfg.MergeLocalRootDir
 	// 分块信息对应的redis键前缀
 	ChunkKeyPrefix = "MP_"
 	// 文件hash映射uploadid对应的redis键前缀
