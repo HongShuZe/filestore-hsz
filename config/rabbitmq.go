@@ -13,4 +13,6 @@ const (
 	TransOSSErrQueueName = "uploadserver.trans.oss.err"
 	// routingKey
 	TransOSSRoutingKey = "oss"
+	// routingKey
+	TransOSSErrRoutingKey = "err"
 )

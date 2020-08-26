@@ -1,7 +1,10 @@
 package mq
 
-import "log"
-
+import (
+	"log"
+	cfg "filestore-hsz/config"
+	"fmt"
+)
 var done chan bool
 
 // 接收消息
@@ -29,6 +32,11 @@ func StartConsume(qName, cName string, callback func(msg []byte) bool) {
 			processErr := callback(d.Body)
 			if processErr {
 				// TODO: 将任务写入错误队列, 待后续处理
+				fmt.Println("发生错误, 将任务写入错误队列")
+				Publish(
+					cfg.TransExchangeName,
+					cfg.TransOSSErrRoutingKey,
+					d.Body)
 			}
 		}
 	}()
