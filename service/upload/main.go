@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"filestore-hsz/handler"
 	"fmt"
+	cfg "filestore-hsz/config"
 )
 
 func main()  {
@@ -39,8 +40,8 @@ func main()  {
 	http.HandleFunc("/user/info",handler.HTTPInterceptor(handler.UserInfoHandler))
 
 	//监听端口
-	fmt.Println("上传服务器正在启动， 监听端口：8080...")
-	err := http.ListenAndServe(":8080", nil)
+	fmt.Println("上传服务器正在启动， 监听端口："+ cfg.UploadServiceHost)
+	err := http.ListenAndServe(cfg.UploadServiceHost, nil)
 	if err != nil {
 		fmt.Printf("failed to start server, err:%s", err)
 	}

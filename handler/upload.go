@@ -17,7 +17,19 @@ import (
 	"filestore-hsz/store/ceph"
 	"strings"
 	"filestore-hsz/store/oss"
+	"filestore-hsz/mq"
 )
+
+func init()  {
+	if err := os.MkdirAll(cfg.TempLocalRootDir, 0744); err != nil {
+		fmt.Println("无法指定目录用于存储临时文件", cfg.TempLocalRootDir)
+		os.Exit(1)
+	}
+	if err := os.MkdirAll(cfg.MergeLocalRootDir, 0744); err != nil {
+		fmt.Println("无法指定目录用于存储临合并后文件", cfg.MergeLocalRootDir)
+		os.Exit(1)
+	}
+}
 
 // 处理文件上传
 func UploadHandler(w http.ResponseWriter, r *http.Request) {
@@ -76,13 +88,38 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 			fileMeta.Location = cephPath
 		} else if cfg.CurrentStoreType == cmn.StoreOSS {
 			ossPath := "oss/" + fileMeta.FileSha1
-			err = oss.Bucket().PutObject(ossPath, newFile)
-			if err != nil {
-				fmt.Println("upload oss err: " + err.Error())
-				w.Write([]byte("upload failed"))
-				return
+
+			// 判断写入OSS为同步还是异步
+			if !cfg.AsyncTransferEnable {
+				err = oss.Bucket().PutObject(ossPath, newFile)
+				if err != nil {
+					fmt.Println("upload oss err: " + err.Error())
+					w.Write([]byte("upload failed"))
+					return
+				}
+				fileMeta.Location = ossPath
+			} else {
+				// 文件尚未转移, 暂存于本地mergePath
+				fileMeta.Location = mergePath
+				// 写入异步转移任务队列
+				data := mq.TransferData{
+					FileHash: fileMeta.FileSha1,
+					CurLocation: fileMeta.Location,
+					DestLocation: ossPath,
+					DestStoreType: cmn.StoreOSS,
+				}
+				fmt.Println(data)
+				pubData, _ := json.Marshal(data)
+				pubSuc := mq.Publish(
+					cfg.TransExchangeName,
+					cfg.TransOSSRoutingKey,
+					pubData,
+				)
+				if !pubSuc {
+					// TODO: 当前发送转移信息失败, 稍后重试
+					w.Write([]byte("当前发送转移信息失败, 稍后重试"))
+				}
 			}
-			fileMeta.Location = ossPath
 		} else {
 			fileMeta.Location = mergePath
 		}
@@ -210,14 +247,17 @@ func FileDeleteHandler(w http.ResponseWriter, r *http.Request)  {
 	fileSha1 := r.Form.Get("filehash")
 	username := r.Form.Get("username")
 
-	// 删除本地文件
 	fm, err := meta.GetFileMetaDB(fileSha1)
 	//fMeta := meta.GetFileMeta(fileSha1)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+	// 删除本地文件
 	os.Remove(fm.Location)
+	// TODO: 可考虑删除Ceph/OSS上传的文件
+	// 可以不立即删除, 加个超时机制
+	// 如该文件10天后没有用户上传,就可以真正删除
 
 	// 删除用户文件表的一条记录
 	suc := dblayer.DeleteUserFile(username, fileSha1)
