@@ -30,7 +30,7 @@ func StartConsume(qName, cName string, callback func(msg []byte) bool) {
 		for d := range msgs {
 			// 调用callback方法来处理新的消息
 			processErr := callback(d.Body)
-			if processErr {
+			if !processErr {
 				// TODO: 将任务写入错误队列, 待后续处理
 				fmt.Println("发生错误, 将任务写入错误队列")
 				Publish(

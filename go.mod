@@ -5,6 +5,7 @@ go 1.14
 require (
 	github.com/aliyun/aliyun-oss-go-sdk v2.1.4+incompatible
 	github.com/garyburd/redigo v1.6.2
+	github.com/gin-gonic/gin v1.6.3
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/json-iterator/go v1.1.10
 	github.com/streadway/amqp v1.0.0
