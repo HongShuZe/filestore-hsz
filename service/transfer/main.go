@@ -7,8 +7,11 @@ import (
 	"os"
 	"filestore-hsz/store/oss"
 	"bufio"
-	dblayer "filestore-hsz/db"
+	dbCli "filestore-hsz/service/dbproxy/client"
 	"filestore-hsz/config"
+	micro "github.com/micro/go-micro"
+	"time"
+	"fmt"
 )
 
 // 文件处理转移
@@ -37,14 +40,37 @@ func ProcessTransfer(msg []byte) bool {
 		return false
 	}
 
-	_ = dblayer.UpdateFileLocation(
+	resp, err := dbCli.UpdateFileLocation(
 		pubData.FileHash,
 		pubData.DestLocation)
+	if err != nil {
+		log.Println(err.Error())
+		return false
+	}
+	if !resp.Suc {
+		log.Println("更新数据库异常, 请检查:"+ pubData.FileHash)
+		return false
+	}
 
 	return true
 }
 
-func main()  {
+
+func startRPCService()  {
+	service := micro.NewService(
+		micro.Name("go.micro.service.transfer"), 	// 在注册中心中的服务名称
+		micro.RegisterTTL(time.Second * 10), 		// TTL指定从上一次心跳间隔起，超过这个时间服务会被服务发现移除
+		micro.RegisterInterval(time.Second * 5),	// 让服务在指定时间内重新注册, 保持TTL获取的注册时间有效
+		micro.Registry(config.RegistryConsul()), 	// micro(v1.18) 需要显示指定consul
+	)
+	service.Init()
+
+	if err := service.Run(); err != nil {
+		fmt.Println(err)
+	}
+}
+
+func startTranserService()  {
 	if !config.AsyncTransferEnable {
 		log.Println("异步转移文件功能目录禁用, 请检查相关配置")
 		return
@@ -55,4 +81,12 @@ func main()  {
 		config.TransOSSQueueName,
 		"transfer_oss",
 		ProcessTransfer)
+}
+
+func main()  {
+	// 文件转移服务
+	go startTranserService()
+
+	// rpc服务
+	startRPCService()
 }

@@ -14,10 +14,12 @@ const (
 	StatusServerError
 	// 10003 注册失败
 	StatusRegisterFailed
-	// 10003 登录失败
+	// 10004 登录失败
 	StatusLoginFailed
 	// 10005 token无效
 	StatusInvalidToken
 	// 10006 文件已存在
 	FileAlreadExists
+	// 10007 用户不存在
+	StatusUserNoExists
 )

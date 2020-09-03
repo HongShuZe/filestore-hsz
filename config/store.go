@@ -9,6 +9,10 @@ const (
 	MergeLocalRootDir = "/home/zwx/data/fileserver_marge/"
 	// 分块存储地址的路径
 	ChunckLocalRootDir = "/home/zwx/data/fileserver_chunk/"
+	// Ceph的存储路径prefix
+	CephRootDir = "/ceph"
+	// OSS的存储路径prefix
+	OSSRootDir = "oss/"
 	// 设置当前文件的存储类型
 	CurrentStoreType = cmn.StoreOSS
 )
