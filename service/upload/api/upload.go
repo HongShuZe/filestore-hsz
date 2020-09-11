@@ -17,6 +17,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"bytes"
 	dbCli "filestore-hsz/service/dbproxy/client"
+	"log"
 )
 
 func init()  {
@@ -40,7 +41,12 @@ func DoUploadHandler(c *gin.Context) {
 		if errCode < 0 {
 			c.JSON(http.StatusOK, gin.H{
 				"code": errCode,
-				"msg": "Upload failed",
+				"msg":  "上传失败",
+			})
+		} else {
+			c.JSON(http.StatusOK, gin.H{
+				"code": errCode,
+				"msg":  "上传成功",
 			})
 		}
 	}()
@@ -48,7 +54,7 @@ func DoUploadHandler(c *gin.Context) {
 	// 1.从form表单获取文件内热句柄
 	file, head, err := c.Request.FormFile("file")
 	if err != nil {
-		fmt.Printf("failed to get data, err:%s\n", err.Error())
+		log.Printf("failed to get data, err:%s\n", err.Error())
 		errCode = -1
 		return
 	}
@@ -57,7 +63,7 @@ func DoUploadHandler(c *gin.Context) {
 	// 2.把文件内容转为[]byte
 	buf := bytes.NewBuffer(nil)
 	if _, err := io.Copy(buf, file); err != nil {
-		fmt.Printf("failed to get data, err:%s\n", err.Error())
+		log.Printf("failed to get data, err:%s\n", err.Error())
 		errCode = -2
 		return
 	}
@@ -74,7 +80,7 @@ func DoUploadHandler(c *gin.Context) {
 	fileMeta.Location = cfg.MergeLocalRootDir + fileMeta.FileSha1
 	newFile, err := os.Create(fileMeta.Location)
 	if err != nil {
-		fmt.Printf("Failed to create file, err:%s\n", err.Error())
+		log.Printf("Failed to create file, err:%s\n", err.Error())
 		errCode = -3
 		return
 	}
@@ -82,12 +88,10 @@ func DoUploadHandler(c *gin.Context) {
 
 	nByte, err := newFile.Write(buf.Bytes())
 	if int64(nByte) != fileMeta.FileSize || err != nil {
-		fmt.Printf("Failed to save data into file, writenSize:%d, err:%s\n",nByte, err.Error() )
+		log.Printf("Failed to save data into file, writenSize:%d, err:%s\n",nByte, err.Error() )
 		errCode = -4
 		return
 	}
-	newFile.Seek(0, 0)
-
 
 	// 5.同步或异步将文件转移到Ceph/OSS
 	newFile.Seek(0, 0) // 游标重新回到文件头部
@@ -97,20 +101,19 @@ func DoUploadHandler(c *gin.Context) {
 		cephPath := "/ceph/" + fileMeta.FileSha1
 		err = ceph.PutObject("userfile", cephPath, data)
 		if err != nil {
-			fmt.Println("upload ceph err: " + err.Error())
+			log.Println("upload ceph err: " + err.Error())
 			errCode = -5
 			return
 		}
 		fileMeta.Location = cephPath
 	} else if cfg.CurrentStoreType == cmn.StoreOSS {
-		ossPath := "oss/" + fileMeta.FileSha1
-
+		ossPath := cfg.OSSRootDir + fileMeta.FileSha1
 		// 判断写入OSS为同步还是异步
 		if !cfg.AsyncTransferEnable {
 			// TODO: 设置文件oss中的文件名, 方便指定文件下载
 			err = oss.Bucket().PutObject(ossPath, newFile)
 			if err != nil {
-				fmt.Println("upload oss err: " + err.Error())
+				log.Println("upload oss err: " + err.Error())
 				errCode = -5
 				return
 			}
@@ -133,6 +136,7 @@ func DoUploadHandler(c *gin.Context) {
 			if !pubSuc {
 				// TODO: 当前发送转移信息失败, 稍后重试
 				//errCode = -6
+				fmt.Println("当前发送转移信息失败, 稍后重试")
 			}
 		}
 	}

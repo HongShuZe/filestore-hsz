@@ -1,0 +1,76 @@
+version: '2'
+
+services:
+  apiwg:
+    image: fileserver/apiwg
+    networks:
+      - web
+    env_file:
+      - ./.env
+    environment:
+      - PARAMS=${registryAddr} ${redisAddr} ${mysqlAddr} ${mqAddr}
+    labels:
+      - "traefik.backend=apiwg"
+      - "traefik.frontend.rule=Host:apiwg.fileserver.com"
+      - "traefik.docker.port=8080"
+  upload:
+    image: fileserver/upload
+    networks:
+      - web
+    volumes:
+      - /data/fileserver:/data/fileserver
+      - /data/fileserver_part:/data/fileserver_part
+    env_file:
+      - ./.env
+    environment:
+      - PARAMS=${registryAddr} ${redisAddr} ${mysqlAddr} ${mqAddr}
+    labels:
+      - "traefik.backend=upload"
+      - "traefik.frontend.rule=Host:upload.fileserver.com"
+      - "traefik.docker.port=28080"
+  download:
+    image: fileserver/download
+    networks:
+      - web
+    volumes:
+      - /data/fileserver:/data/fileserver
+      - /data/fileserver_part:/data/fileserver_part
+    env_file:
+      - ./.env
+    environment:
+      - PARAMS=${registryAddr} ${redisAddr} ${mysqlAddr} ${mqAddr}
+    labels:
+      - "traefik.backend=download"
+      - "traefik.frontend.rule=Host:download.fileserver.com"
+      - "traefik.docker.port=38080"
+  account:
+    image: fileserver/account
+    networks:
+      - web
+    env_file:
+      - ./.env
+    environment:
+      - PARAMS=${registryAddr} ${redisAddr} ${mysqlAddr} ${mqAddr}
+  transfer:
+    image: fileserver/transfer
+    networks:
+      - web
+    volumes:
+      - /data/fileserver:/data/fileserver
+      - /data/fileserver_part:/data/fileserver_part
+    env_file:
+      - ./.env
+    environment:
+      - PARAMS=${registryAddr} ${redisAddr} ${mysqlAddr} ${mqAddr}
+  dbproxy:
+    image: fileserver/dbproxy
+    networks:
+      - web
+    env_file:
+      - ./.env
+    environment:
+      - PARAMS=${registryAddr} ${redisAddr} ${mysqlAddr} ${mqAddr}
+networks:
+  web:
+    external:
+      name: fileserver

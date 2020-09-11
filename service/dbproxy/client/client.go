@@ -3,7 +3,6 @@ package meta
 import (
 	dbProto "filestore-hsz/service/dbproxy/proto"
 	"github.com/micro/go-micro"
-	"filestore-hsz/config"
 	"log"
 	"context"
 	"filestore-hsz/service/dbproxy/orm"
@@ -24,12 +23,12 @@ var (
 	dbCli dbProto.DBProxyService
 )
 
-func init() {
-	service := micro.NewService(
+func Init(service micro.Service) {
+	/*service := micro.NewService(
 		micro.Registry(config.RegistryConsul()),
 	)
 	// 初始化, 解析命令行参数等
-	service.Init()
+	service.Init()*/
 	// 初始化一个dbproxy服务的客户端
 	dbCli = dbProto.NewDBProxyService("go.micro.service.dbproxy", service.Client())
 }

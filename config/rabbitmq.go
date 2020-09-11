@@ -3,8 +3,6 @@ package config
 const (
 	// 是否开启文件异步转移
 	AsyncTransferEnable = true
-	// rabbitmq服务入口url
-	RabbitURL = "amqp://guest:guest@127.0.0.1:5672/"
 	// 用于文件transfer的交换机
 	TransExchangeName = "uploadserver.trans"
 	// oss转移队列名
@@ -16,3 +14,10 @@ const (
 	// routingKey
 	TransOSSErrRoutingKey = "err"
 )
+
+var (
+	// rabbitmq服务入口url
+	RabbitURL = "amqp://guest:guest@127.0.0.1:5672/"
+)
+
+

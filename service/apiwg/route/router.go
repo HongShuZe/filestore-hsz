@@ -4,15 +4,53 @@ import (
 	"filestore-hsz/service/apiwg/handler"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-contrib/cors"
-	"filestore-hsz/middleware"
+	"net/http"
+	"github.com/elazarl/go-bindata-assetfs"
+	"filestore-hsz/assets"
+	"strings"
+	"github.com/gin-gonic/contrib/static"
 )
+
+type binaryFileSystem struct {
+	fs http.FileSystem
+}
+
+func (b *binaryFileSystem) Open(name string) (http.File, error) {
+	return b.fs.Open(name)
+}
+
+func (b *binaryFileSystem) Exists(prefix string, filepath string) bool {
+
+	if p := strings.TrimPrefix(filepath, prefix); len(p) < len(filepath) {
+		if _, err := b.fs.Open(p); err != nil {
+			return false
+		}
+		return true
+	}
+	return false
+}
+
+func BinaryFileSystem(root string) *binaryFileSystem {
+	fs := &assetfs.AssetFS{
+		Asset:     assets.Asset,
+		AssetDir:  assets.AssetDir,
+		//AssetInfo: assets.AssetInfo,
+		Prefix:    root,
+	}
+	return &binaryFileSystem{
+		fs,
+	}
+}
+
+
 
 // 网关api
 func Router() *gin.Engine {
 	router := gin.Default()
 
 	// 静态资源处理
-	router.Static("/static/", "./static")
+	//router.Static("/static/", "./static")
+	router.Use(static.Serve("/static/", BinaryFileSystem("static")))
 
 	// 注册
 	router.GET("/user/signup", handler.SignupHandler)
@@ -30,7 +68,7 @@ func Router() *gin.Engine {
 		// AllowCredentials: true,
 	}))
 
-	router.Use(middleware.HTTPInterceptor())
+	//router.Use(middleware.HTTPInterceptor())
 
 	// 用户查询
 	router.POST("/user/info", handler.UserInfoHandler)

@@ -2,3 +2,4 @@
 vendor
 test_upload
 service/bin
+deploy/bin

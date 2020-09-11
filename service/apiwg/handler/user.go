@@ -11,10 +11,10 @@ import (
 	dlProto "filestore-hsz/service/download/proto"
 	upProto "filestore-hsz/service/upload/proto"
 	"github.com/micro/go-micro"
-	"filestore-hsz/config"
 	"context"
 	"log"
 	cmn "filestore-hsz/common"
+	"filestore-hsz/config"
 )
 
 var (
@@ -26,6 +26,7 @@ var (
 func init() {
 	service := micro.NewService(
 		micro.Registry(config.RegistryConsul()),
+		micro.Flags(common.CustomFlags...),
 	)
 	// 初始化, 解析命令行参数等
 	service.Init()
