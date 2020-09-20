@@ -2,7 +2,6 @@ package config
 
 import (
 	"fmt"
-	"log"
 )
 
 var (
@@ -16,5 +15,4 @@ var (
 
 func UpdataDBHost(host string)  {
 	MySQLSource = fmt.Sprintf("root:123456@tcp(%s)/fileserver?charset=utf8", host)
-	log.Println(MySQLSource)
 }

@@ -22,6 +22,8 @@ import (
 	"filestore-hsz/mq"
 )
 
+// uploadID 为该文件全部分块的共同标识
+
 // 初始化信息
 type MultipartUploadInfo struct {
 	FileHash string
@@ -128,13 +130,13 @@ func InitialMultipartUploadHandler(c *gin.Context) {
 		UploadID:    uploadID,
 		ChunkSize:   5 * 1024 * 1024, //5MB
 		ChunkCount:  int(math.Ceil(float64(filesize) / (5 * 1024 * 1024))),
-		ChunkExists: chunksExist,
+		ChunkExists: chunksExist, //已经上传完成的分块索引列表
 	}
 
 	// 6.将初始化信息写入到redis缓存
 	if len(upInfo.ChunkExists) <= 0 {
 		hKey := ChunkKeyPrefix + upInfo.UploadID
-		rConn.Do("HSET", hKey, "chunkcount", upInfo.ChunkCount) // 将哈希表hKey中的字段chunkcount的值设为upInfo.ChunkCount
+		rConn.Do("HSET", hKey, "chunkcount", upInfo.ChunkCount) // 相当于存入一个名为hKey的对象, 该对象有一个键"chunkcount" 对应值为upInfo.ChunkCount
 		rConn.Do("HSET", hKey, "filehash", upInfo.FileHash)
 		rConn.Do("HSET", hKey, "filesize", upInfo.FileSize)
 		rConn.Do("EXPIRE", hKey, 43200)                                           // 设置键hKey有效期为半天
@@ -177,7 +179,9 @@ func UploadPartHandler(c *gin.Context)  {
 
 	buf := make([]byte, 1024*1024)
 	for {
+		// 通过字节流读取内容
 		n, err := c.Request.Body.Read(buf)
+		//
 		fd.Write(buf[:n])
 		if err != nil {
 			break
@@ -235,11 +239,11 @@ func CompleteUploadHandler(c *gin.Context)  {
 	totalCount := 0
 	chunkCount := 0
 	for i := 0; i < len(data); i += 2 {
-		k := string(data[i].([]byte))
-		v := string(data[i+1].([]byte))
-		if k == "chunkcount" {
+		k := string(data[i].([]byte))  //key
+		v := string(data[i+1].([]byte)) //value
+		if k == "chunkcount" { // 因为该字段对应的值是 分块数
 			totalCount, _ = strconv.Atoi(v)
-		}else if strings.HasPrefix(k, "chkidx_") && v == "1" {
+		}else if strings.HasPrefix(k, "chkidx_") && v == "1" { // TODO 该"chkidx_"键 对应的 值固定为1, 由202行可知
 			chunkCount++
 		}
 	}
@@ -256,7 +260,7 @@ func CompleteUploadHandler(c *gin.Context)  {
 	srcPath := cfg.ChunckLocalRootDir + uploadID + "/"
 	destPath := cfg.MergeLocalRootDir + filehash
 	cmd := fmt.Sprintf("cd %s && ls | sort -n | xargs cat > %s", srcPath, destPath)
-	mergeRes, err := util.ExecLinuxShell(cmd)
+	mergeRes, err := util.ExecLinuxShell(cmd) // 通过util把分块文件合并
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"code": -3,
@@ -298,6 +302,7 @@ func CompleteUploadHandler(c *gin.Context)  {
 
 	// 删除已上传的分块文件及redis分块信息
 	_, delHashErr := rConn.Do("DEL", HashUpIDKeyPrefix+filehash)
+	// Int64是一个帮助器，它将命令应答转换为64位整数。
 	delUploadID, delUploadInfoErr := redis.Int64(rConn.Do("DEL", ChunkKeyPrefix+uploadID))
 	if delUploadID != 1 || delUploadInfoErr != nil || delHashErr != nil {
 		c.JSON(http.StatusOK, gin.H{
@@ -308,15 +313,16 @@ func CompleteUploadHandler(c *gin.Context)  {
 		return
 	}
 	// 6.异步文件转移
-	ossPath := cfg.OSSRootDir +fileMeta.FileSha1
+	ossPath := cfg.OSSRootDir +fileMeta.FileName
 	transMsg := mq.TransferData{
 		FileHash: fileMeta.FileSha1,
 		CurLocation: fileMeta.Location,
 		DestLocation: ossPath,
 		DestStoreType: cmn.StoreOSS,
 	}
+	//
+	pubData, _ := json.Marshal(transMsg)
 	fmt.Println(transMsg)
-	pubData, _ := json.Marshal(data)
 	pubSuc := mq.Publish(
 		cfg.TransExchangeName,
 		cfg.TransOSSRoutingKey,

@@ -1,6 +1,5 @@
 package handler
 
-
 import (
 	"net/http"
 	"filestore-hsz/util"
@@ -157,9 +156,8 @@ func UserInfoHandler(c *gin.Context)  {
 		Data: gin.H{
 			"Username": username,
 			"SignupAt": resp.SignupAt,
-			/*"Status": res.Status,
-			"Phone": res.Phone,
-			"Email": res.Email,*/
+			"Phone": resp.Phone,
+			"Email": resp.Email,
 			"LastActive": resp.LastActiveAt,
 		},
 	}

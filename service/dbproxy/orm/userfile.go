@@ -10,7 +10,7 @@ import (
 func OnUserFileUploadFinished(username, filehash, filename string, filesize int64) (res ExecResult) {
 	stmt, err := mydb.DBConn().Prepare(
 		"insert ignore into tbl_user_file (`user_name`, `file_sha1`, `file_name`, " +
-			"`file_size`, `upload_at`, `status`) values (?,?,?,?,?,1)")
+			"`file_size`, `upload_at`, `status`) values (?,?,?,?,?,0)")
 	if err != nil {
 		log.Println(err.Error())
 		res.Suc = false
@@ -33,7 +33,7 @@ func OnUserFileUploadFinished(username, filehash, filename string, filesize int6
 func QueryUserFileMetas(username string, limit int64) (res ExecResult) {
 	stmt, err := mydb.DBConn().Prepare(
 		"select file_sha1, file_name, file_size, upload_at," +
-			"last_update from tbl_user_file where user_name=? limit ?")
+			"last_update from tbl_user_file where user_name=? and status=0 limit ?")
 	if err != nil {
 		log.Println(err.Error())
 		res.Suc = false
@@ -115,7 +115,7 @@ func RenameFileName(username, filehash, filename string) (res ExecResult) {
 func QueryUserFileMeta(username string, filehash string) (res ExecResult) {
 	stmt, err := mydb.DBConn().Prepare(
 		"select file_sha1, file_name, file_size, upload_at," +
-			"last_update from tbl_user_file where user_name=? and file_sha1=? limit 1")
+			"last_update from tbl_user_file where user_name=? and file_sha1=? and status=0 limit 1")
 	if err != nil {
 		res.Suc = false
 		res.Msg = err.Error()
@@ -150,7 +150,7 @@ func QueryUserFileMeta(username string, filehash string) (res ExecResult) {
 // 文件是否已经上传
 func IsUserFileUploaded(username string, filehash string) (res ExecResult) {
 	stmt, err := mydb.DBConn().Prepare(
-		"select 1 from tbl_user_file where user_name=? and file_sha1=? and status=1 limit 1")
+		"select 1 from tbl_user_file where user_name=? and file_sha1=? and status=0 limit 1")
 	rows, err := stmt.Query(username, filehash)
 	if err != nil {
 		res.Suc = false

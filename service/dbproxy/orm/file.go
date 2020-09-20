@@ -12,7 +12,7 @@ func OnFileUploadFinished(filehash string, filename string,
 	filesize int64, fileaddr string) (res ExecResult) {
 	stmt, err := mydb.DBConn().Prepare(
 		"insert ignore into tbl_file (`file_sha1`, `file_name`, `file_size`, " +
-			"`file_addr`, `status`) values (?,?,?,?,1)")
+			"`file_addr`, `status`) values (?,?,?,?,0)")
 	if err != nil {
 		log.Println("Failed to prepare prepare statement., err" + err.Error())
 		res.Suc = false
@@ -40,7 +40,7 @@ func OnFileUploadFinished(filehash string, filename string,
 func GetFileMeta(filehash string) (res ExecResult) {
 	stmt, err := mydb.DBConn().Prepare(
 		"select file_sha1, file_addr, file_name, file_size from tbl_file " +
-			"where file_sha1=? and status=1 limit 1")
+			"where file_sha1=? and status=0 limit 1")
 	if err != nil {
 		log.Println(err.Error())
 		res.Suc = false
@@ -88,7 +88,7 @@ func IsFileUploaded(filehash string) bool {
 func GetFileMetaList(limit int64) (res ExecResult) {
 	stmt, err := mydb.DBConn().Prepare(
 		"select file_sha1, file_addr, file_name, file_size from tbl_file" +
-			"where status=1 limit ?")
+			"where status=0 limit ?")
 	if err != nil {
 		log.Println(err.Error())
 		res.Suc = false

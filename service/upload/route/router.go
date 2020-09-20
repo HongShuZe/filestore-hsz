@@ -21,6 +21,8 @@ func Router() *gin.Engine {
 		ExposeHeaders: []string{"Content-Length", "Accept-Range", "Content-Range", "Content-Disposition"},
 		// AllowCredentials: true,
 	}))
+	// token验证中间件
+	//router.Use(middleware.HTTPInterceptor())
 
 	// 文件存取接口
 	router.POST("/file/upload", a.DoUploadHandler)

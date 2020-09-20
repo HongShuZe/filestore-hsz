@@ -42,8 +42,10 @@ type UserService interface {
 	UserInfo(ctx context.Context, in *ReqUserInfo, opts ...client.CallOption) (*RespUserInfo, error)
 	// 获取用户文件
 	UserFiles(ctx context.Context, in *ReqUserFile, opts ...client.CallOption) (*RespUserFile, error)
-	// 获取用户文件
+	// 用户文件重命名
 	UserFileRename(ctx context.Context, in *ReqUserFileRename, opts ...client.CallOption) (*RespUserFileRename, error)
+	// 删除用户文件
+	UserFileDelete(ctx context.Context, in *ReqUserFileDelete, opts ...client.CallOption) (*RespUserFileDelete, error)
 }
 
 type userService struct {
@@ -114,6 +116,16 @@ func (c *userService) UserFileRename(ctx context.Context, in *ReqUserFileRename,
 	return out, nil
 }
 
+func (c *userService) UserFileDelete(ctx context.Context, in *ReqUserFileDelete, opts ...client.CallOption) (*RespUserFileDelete, error) {
+	req := c.c.NewRequest(c.name, "UserService.UserFileDelete", in)
+	out := new(RespUserFileDelete)
+	err := c.c.Call(ctx, req, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // Server API for UserService service
 
 type UserServiceHandler interface {
@@ -125,8 +137,10 @@ type UserServiceHandler interface {
 	UserInfo(context.Context, *ReqUserInfo, *RespUserInfo) error
 	// 获取用户文件
 	UserFiles(context.Context, *ReqUserFile, *RespUserFile) error
-	// 获取用户文件
+	// 用户文件重命名
 	UserFileRename(context.Context, *ReqUserFileRename, *RespUserFileRename) error
+	// 删除用户文件
+	UserFileDelete(context.Context, *ReqUserFileDelete, *RespUserFileDelete) error
 }
 
 func RegisterUserServiceHandler(s server.Server, hdlr UserServiceHandler, opts ...server.HandlerOption) error {
@@ -136,6 +150,7 @@ func RegisterUserServiceHandler(s server.Server, hdlr UserServiceHandler, opts .
 		UserInfo(ctx context.Context, in *ReqUserInfo, out *RespUserInfo) error
 		UserFiles(ctx context.Context, in *ReqUserFile, out *RespUserFile) error
 		UserFileRename(ctx context.Context, in *ReqUserFileRename, out *RespUserFileRename) error
+		UserFileDelete(ctx context.Context, in *ReqUserFileDelete, out *RespUserFileDelete) error
 	}
 	type UserService struct {
 		userService
@@ -166,4 +181,8 @@ func (h *userServiceHandler) UserFiles(ctx context.Context, in *ReqUserFile, out
 
 func (h *userServiceHandler) UserFileRename(ctx context.Context, in *ReqUserFileRename, out *RespUserFileRename) error {
 	return h.UserServiceHandler.UserFileRename(ctx, in, out)
+}
+
+func (h *userServiceHandler) UserFileDelete(ctx context.Context, in *ReqUserFileDelete, out *RespUserFileDelete) error {
+	return h.UserServiceHandler.UserFileDelete(ctx, in, out)
 }

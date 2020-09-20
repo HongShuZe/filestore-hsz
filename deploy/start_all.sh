@@ -35,7 +35,7 @@ for service in $services
 do
     volumes=""
     # 指定挂载目录
-    if [[ $service == "upload" || $service == "download" ]];then
+    if [[ $service == "upload" || $service == "download" || $service == "transfer" ]];then
         volumes="-v /home/zwx/data/fileserver_marge:/home/zwx/data/fileserver_marge -v /home/zwx/data/fileserver_chunk:/home/zwx/data/fileserver_chunk"
     fi
 

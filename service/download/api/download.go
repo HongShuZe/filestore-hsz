@@ -13,6 +13,7 @@ import (
 	cfg "filestore-hsz/config"
 	"log"
 	"filestore-hsz/store/ceph"
+	"io"
 )
 
 
@@ -30,7 +31,7 @@ func DownloadURLHandler(c *gin.Context) {
 	}
 
 	tblFile := dbCli.ToTableFile(dbResp.Data)
-
+	log.Println(tblFile.FileAddr.String)
 	// 判断文件存在OSS, 还是Ceph, 还是本地
 	if strings.HasPrefix(tblFile.FileAddr.String, cfg.MergeLocalRootDir) ||
 		strings.HasPrefix(tblFile.FileAddr.String, cfg.CephRootDir) {
@@ -40,8 +41,10 @@ func DownloadURLHandler(c *gin.Context) {
 			c.Request.Host, filehash, username, token)
 		c.Data(http.StatusOK, "application/octet-stream", []byte(tmpURL))
 	} else if strings.HasPrefix(tblFile.FileAddr.String, cfg.OSSRootDir) {
+		// oss下载url
 		signedURL := oss.DownloadURL(tblFile.FileAddr.String)
 		log.Println(tblFile.FileAddr.String)
+		log.Println("hsz")
 		c.Data(http.StatusOK, "application/octet-stream", []byte(signedURL))
 	} else {
 		c.Data(http.StatusOK, "application/octet-stream", []byte("Error: 下载链接暂时无法生成"))
@@ -50,12 +53,15 @@ func DownloadURLHandler(c *gin.Context) {
 
 // 文件下载接口
 func DownloadHandler(c *gin.Context) {
+	log.Println("DownloadHandler 1")
 	fsha1 := c.Request.FormValue("filehash")
 	username := c.Request.FormValue("username")
-
 	fResp, ferr := dbCli.GetFileMeta(fsha1)
+	log.Println("DownloadHandler 2")
 	ufResp, uferr := dbCli.QueryUserFileMeta(username, fsha1)
+	log.Println("DownloadHandler 3")
 	if ferr != nil || uferr != nil || !fResp.Suc || !ufResp.Suc{
+		log.Println("DownloadHandler 4")
 		c.JSON(http.StatusOK, gin.H{
 			"code": common.StatusServerError,
 			"msg": "server error",
@@ -64,25 +70,45 @@ func DownloadHandler(c *gin.Context) {
 	}
 	uniqFile := dbCli.ToTableFile(fResp.Data)
 	userFile := dbCli.ToTableUserFile(ufResp.Data)
-
+	log.Println("DownloadHandler 5")
+	log.Println("uniqFile.FileAddr.String:"+uniqFile.FileAddr.String)
 	if strings.HasPrefix(uniqFile.FileAddr.String, cfg.MergeLocalRootDir) {
 		c.FileAttachment(uniqFile.FileAddr.String, userFile.FileName)
 	} else if strings.HasPrefix(uniqFile.FileAddr.String, cfg.CephRootDir) {
 		log.Println("to download file from ceph...")
 		bucket := ceph.GetCephBucket("userfile")
 		fileData, _ := bucket.Get(uniqFile.FileAddr.String)
-		c.Header("Content-disposition", "attachment; filename=\""+userFile.FileName+"\"")
+		c.Header("content-disposition", "attachment; filename=\""+userFile.FileName+"\"")
 		c.Data(http.StatusOK, "application/octect-stream", fileData)
 	} else if strings.HasPrefix(uniqFile.FileAddr.String, cfg.OSSRootDir) {
+		fmt.Println("为什么oss下载有问题,可能和前端代码有关")
 		log.Println("to download file from oss...")
-
-		fd, err1 := oss.Bucket().GetObject(uniqFile.FileAddr.String)
+		/*fd, err1 := oss.Bucket().GetObject(uniqFile.FileAddr.String)
 		if err1 == nil {
 			fileData, err2 := ioutil.ReadAll(fd)
 			if err2 == nil {
 				c.Header("Content-disposition", "attachment; filename=\""+userFile.FileName+"\"")
 				c.Data(http.StatusOK, "application/octect-stream", fileData)
 			}
+		}*/
+		var err1 error
+		var err2 error
+		var fd io.ReadCloser
+		var fileData []byte
+		fd, err1 = oss.Bucket().GetObject(uniqFile.FileAddr.String)
+		if err1 == nil {
+			fileData, err2 = ioutil.ReadAll(fd)
+			fmt.Println(fileData)
+			fmt.Println("hszz-oss-download")
+			if err2 == nil {
+				log.Println("hszz-oss-download")
+				c.Header("content-disposition", "attachment; filename=\""+userFile.FileName+"\"")
+				c.Data(http.StatusOK, "application/octect-stream", fileData)
+			}
+		}
+		if err1 != nil || err2 != nil {
+			c.Data(http.StatusInternalServerError, "application/octect-stream", []byte("Intern server error."))
+			return
 		}
 	} else {
 		c.Data(http.StatusNotFound, "application/octect-stream", []byte("File not found."))

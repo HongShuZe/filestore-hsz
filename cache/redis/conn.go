@@ -15,9 +15,13 @@ var (
 // 创建redis连接池
 func newRedisPool() *redis.Pool {
 	return &redis.Pool{
+		// 最大连接数
 		MaxIdle: 50,
+		// 再给定时间的最大连接数
 		MaxActive: 30,
+		// 超时时间
 		IdleTimeout: 300 * time.Second,
+		// 创建和确认连接
 		Dial: func() (redis.Conn, error) {
 			// 1.打开连接
 			c, err := redis.Dial("tcp", redisHost)
@@ -33,6 +37,7 @@ func newRedisPool() *redis.Pool {
 			}*/
 			return c, nil
 		},
+		// 检查连接状态
 		TestOnBorrow: func(c redis.Conn, t time.Time) error {
 			if time.Since(t) < time.Minute {
 				return nil

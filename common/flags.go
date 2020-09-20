@@ -2,6 +2,7 @@ package common
 
 import "github.com/micro/cli"
 
+// 解析命令行参数
 var CustomFlags = []cli.Flag{
 	cli.StringFlag{
 		Name:  "dbhost",

@@ -23,6 +23,9 @@ func Router() *gin.Engine {
 	}))
 	//router.Use(CORS)
 
+	// token验证中间件
+	//router.Use(middleware.HTTPInterceptor())
+
 	// 文件下载接口
 	router.GET("/file/download", a.DownloadHandler)
 	router.GET("/file/download/range", a.RangeDownloadHandler)

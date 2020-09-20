@@ -107,7 +107,7 @@ func DoUploadHandler(c *gin.Context) {
 		}
 		fileMeta.Location = cephPath
 	} else if cfg.CurrentStoreType == cmn.StoreOSS {
-		ossPath := cfg.OSSRootDir + fileMeta.FileSha1
+		ossPath := cfg.OSSRootDir + fileMeta.FileName
 		// 判断写入OSS为同步还是异步
 		if !cfg.AsyncTransferEnable {
 			// TODO: 设置文件oss中的文件名, 方便指定文件下载

@@ -3,13 +3,12 @@ package mq
 import (
 	"github.com/streadway/amqp"
 	"filestore-hsz/config"
-	"fmt"
 )
 
 // 发布消息
 func Publish(exchange, routingKey string, msg []byte) bool {
 	if !initChannel(config.RabbitURL) {
-		fmt.Println("111111111111" + config.RabbitURL)
+		//fmt.Println(config.RabbitURL)
 		return false
 	}
 

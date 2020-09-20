@@ -28,7 +28,9 @@ func ProcessTransfer(msg []byte) bool {
 		return false
 	}
 
-	fin, err := os.Open(pubData.CurLocation)
+	// TODO docker部署时文件被锁, open打不开
+	//fin, err := os.Open(pubData.CurLocation)
+	fin, err := os.OpenFile(pubData.CurLocation,os.O_RDWR, 0777)
 	if err != nil {
 		log.Println(err.Error())
 		return false

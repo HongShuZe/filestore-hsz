@@ -8,7 +8,6 @@ import (
 	"github.com/elazarl/go-bindata-assetfs"
 	"filestore-hsz/assets"
 	"strings"
-	"github.com/gin-gonic/contrib/static"
 )
 
 type binaryFileSystem struct {
@@ -49,8 +48,8 @@ func Router() *gin.Engine {
 	router := gin.Default()
 
 	// 静态资源处理
-	//router.Static("/static/", "./static")
-	router.Use(static.Serve("/static/", BinaryFileSystem("static")))
+	router.Static("/static/", "./static")
+	//router.Use(static.Serve("/static/", BinaryFileSystem("static")))
 
 	// 注册
 	router.GET("/user/signup", handler.SignupHandler)
@@ -68,6 +67,7 @@ func Router() *gin.Engine {
 		// AllowCredentials: true,
 	}))
 
+	// token验证中间件
 	//router.Use(middleware.HTTPInterceptor())
 
 	// 用户查询
@@ -76,6 +76,8 @@ func Router() *gin.Engine {
 	router.POST("/file/query", handler.FileQueryHandler)
 	// 用户文件修改(重命名)
 	router.POST("/file/update", handler.FileMetaUpdateHandler)
+	// 用户文件删除
+	router.POST("/file/delete", handler.FileDeleteHandler)
 
 	return router
 }

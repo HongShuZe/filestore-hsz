@@ -99,7 +99,7 @@ func GetUserInfo(username string) (res ExecResult) {
 	user := TableUser{}
 
 	stmt, err := mydb.DBConn().Prepare(
-		"select user_name,signup_at from tbl_user where user_name=? limit 1")
+		"select user_name, signup_at, email, phone, last_active from tbl_user where user_name=? limit 1")
 	if err != nil {
 		log.Println(err.Error())
 		res.Suc = false
@@ -109,7 +109,7 @@ func GetUserInfo(username string) (res ExecResult) {
 	defer stmt.Close()
 
 	// 执行查询操作
-	err = stmt.QueryRow(username).Scan(&user.Username, &user.SignupAt)
+	err = stmt.QueryRow(username).Scan(&user.Username, &user.SignupAt, &user.Email, &user.Phone, &user.LastActiveAt)
 	if err != nil {
 		res.Suc = false
 		res.Msg = err.Error()
@@ -145,7 +145,7 @@ func UserExist(username string) (res ExecResult) {
 	return
 }
 
-// GetUserToken : 获取用户登录token (根据同学们反馈增加的方法)
+// GetUserToken : 获取用户登录token
 func GetUserToken(username string) (res ExecResult) {
 
 	stmt, err := mydb.DBConn().Prepare(

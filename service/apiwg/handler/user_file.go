@@ -47,7 +47,6 @@ func FileMetaUpdateHandler(c *gin.Context)  {
 		return
 	}
 
-
 	rpcResp, err := userCli.UserFileRename(context.TODO(), &userProto.ReqUserFileRename{
 		Username: username,
 		Filehash: fileSha1,
@@ -58,7 +57,27 @@ func FileMetaUpdateHandler(c *gin.Context)  {
 		c.Status(http.StatusInternalServerError)
 		return
 	}
+	if len(rpcResp.FileData) <= 0 {
+		rpcResp.FileData = []byte("[]")
+	}
+	c.Data(http.StatusOK, "application/json", rpcResp.FileData)
+}
 
+// 删除用户文件信息接口(重命名)
+func FileDeleteHandler(c *gin.Context) {
+	fileSha1 := c.Request.FormValue("filehash")
+	username := c.Request.FormValue("username")
+	// context.TODO返回一个非nil的空上下文。代码应该使用上下文。当不清楚要使用哪个上下文或者上下文还不可用(因为周围的函数还没有扩展到接受上下文参数)时，可以使用TODO。
+	rpcResp, err := userCli.UserFileDelete(context.TODO(), &userProto.ReqUserFileDelete{
+		Username: username,
+		Filehash: fileSha1,
+	})
+
+	if err != nil {
+		log.Println(err.Error())
+		c.Status(http.StatusInternalServerError)
+		return
+	}
 	if len(rpcResp.FileData) <= 0 {
 		rpcResp.FileData = []byte("[]")
 	}

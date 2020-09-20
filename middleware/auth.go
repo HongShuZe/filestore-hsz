@@ -5,7 +5,6 @@ import (
 	"filestore-hsz/util"
 	"filestore-hsz/common"
 	"github.com/gin-gonic/gin"
-	"fmt"
 	"time"
 	"log"
 	dbCli "filestore-hsz/service/dbproxy/client"
@@ -58,10 +57,10 @@ func IsTokenValid(token, username string) bool {
 	return true
 }
 
-// 生成token
+/*// 生成token
 func GenToken(username string) string {
 	// 40 位字符
 	ts := fmt.Sprintf("%x", time.Now().Unix())
 	tokenPrefix := util.MD5([]byte(username + ts + "_tokensalt"))
 	return tokenPrefix + ts[:8]
-}
+}*/

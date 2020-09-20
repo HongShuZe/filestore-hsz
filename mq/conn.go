@@ -16,7 +16,7 @@ var notifyClose chan *amqp.Error
 // 更新mq host
 func UpdateRabbitHost(host string) {
 	//config.RabbitURL = host // docker启动时
-	config.RabbitURL = fmt.Sprintf("amqp://guest:guest@%s:5672/", host)
+	config.RabbitURL = fmt.Sprintf("amqp://guest:guest@%s/", host)
 }
 
 // 初始化MQ连接信息
@@ -49,6 +49,7 @@ func initChannel(rabbitHost string) bool {
 	}
 
 	conn, err := amqp.Dial(rabbitHost)
+	log.Println("rmq conn url " + rabbitHost)
 	if err != nil {
 		log.Println(err.Error())
 		return false
