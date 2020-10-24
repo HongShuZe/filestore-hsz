@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ROOT_DIR=/home/zwx/go/src/filestore-hsz
-#ROOT_DIR=/data/imooc/src/filestore-server
+
 services="
 dbproxy
 upload

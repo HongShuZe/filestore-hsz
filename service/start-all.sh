@@ -48,10 +48,10 @@ apiwg
 "
 
 # 执行编译service
-for service in $services
-do
-    build_service $service
-done
+#for service in $services
+#do
+#    build_service $service
+#done
 
 # 执行启动service
 for service in $services

@@ -10,9 +10,9 @@ var (
 	// 127.0.0.1:13306 是ip及端口
 	// fileserver 是数据库名
 	// charset=utf8 指定数据库以utf8字符编码进行传输
-	MySQLSource = "root:123456@tcp(127.0.0.1:13306)/fileserver?charset=utf8"
+	MySQLSource = "root:123456@tcp(192.168.20.143:13306)/fileserver?charset=utf8"
 )
 
-func UpdataDBHost(host string)  {
+func UpdateDBHost(host string) {
 	MySQLSource = fmt.Sprintf("root:123456@tcp(%s)/fileserver?charset=utf8", host)
 }

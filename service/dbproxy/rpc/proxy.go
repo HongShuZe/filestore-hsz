@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"bytes"
 	"filestore-hsz/service/dbproxy/mapper"
-	"fmt"
 )
 
 type DBProxy struct{}
@@ -26,9 +25,10 @@ func (db *DBProxy) ExecuteAction(ctx context.Context, req *dbProxy.ReqExec, res 
 				Suc: false,
 				Msg: "请求球参数有误",
 			}
-			fmt.Println("ExecuteAction, err1:"+err.Error())
+			//fmt.Println("ExecuteAction, err1:"+err.Error())
 			continue
 		}
+
 		for k, v := range params {
 			if _, ok := v.(json.Number); ok {
 				params[k], _ = v.(json.Number).Int64()
@@ -41,7 +41,7 @@ func (db *DBProxy) ExecuteAction(ctx context.Context, req *dbProxy.ReqExec, res 
 				Suc: false,
 				Msg: "函数调用有误",
 			}
-			fmt.Println("ExecuteAction, err2:"+err.Error())
+			//fmt.Println("ExecuteAction, err2:"+err.Error())
 			continue
 		}
 		resList[idx] = execRes[0].Interface().(orm.ExecResult)

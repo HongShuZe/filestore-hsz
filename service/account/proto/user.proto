@@ -68,6 +68,7 @@ message ReqUserFileRename {
     string username = 1;
     string filehash = 2;
     string newFileName = 3;
+    string oldFilename = 4;
 }
 
 message RespUserFileRename {
@@ -79,6 +80,7 @@ message RespUserFileRename {
 message ReqUserFileDelete {
     string username = 1;
     string filehash = 2;
+    string filename = 3;
 }
 
 message RespUserFileDelete {

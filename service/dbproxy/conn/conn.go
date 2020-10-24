@@ -11,8 +11,8 @@ import (
 
 var db *sql.DB
 
-func init() {
-	log.Println("db conn address" + cfg.MySQLSource)
+func InitDBConn() {
+	//log.Println("db conn address:" + cfg.MySQLSource)
 	db, _ = sql.Open("mysql", cfg.MySQLSource)
 	db.SetMaxOpenConns(1000)
 	err := db.Ping()

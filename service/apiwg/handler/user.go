@@ -14,6 +14,11 @@ import (
 	"log"
 	cmn "filestore-hsz/common"
 	"filestore-hsz/config"
+	cfg"filestore-hsz/config"
+	ratelimit2 "github.com/juju/ratelimit"
+	"github.com/micro/go-plugins/wrapper/breaker/hystrix"
+	"github.com/micro/go-plugins/wrapper/ratelimiter/ratelimit"
+	_ "github.com/micro/go-plugins/registry/consul"
 )
 
 var (
@@ -23,18 +28,23 @@ var (
 )
 
 func init() {
+	// 配置请求容量
+	bRate := ratelimit2.NewBucketWithRate(100, 1000)
 	service := micro.NewService(
 		micro.Registry(config.RegistryConsul()),
 		micro.Flags(common.CustomFlags...),
+		micro.WrapClient(ratelimit.NewClientWrapper(bRate, false)), //加入限流功能, false为不等待(超限即返回请求失败)
+		micro.WrapClient(hystrix.NewClientWrapper()), // 加入熔断功能, 处理rpc调用失败的情况(cirucuit breaker)
 	)
 	// 初始化, 解析命令行参数等
 	service.Init()
+	cli := service.Client()
 	// 初始化一个account服务的客户端
-	userCli = userProto.NewUserService("go.micro.service.user", service.Client())
+	userCli = userProto.NewUserService("go.micro.service.user", cli)
 	// 初始化一个upload服务的客户端
-	upCli = upProto.NewUploadService("go.micro.service.upload", service.Client())
+	upCli = upProto.NewUploadService("go.micro.service.upload", cli)
 	// 初始化一个download服务的客户端
-	dlCli = dlProto.NewDownloadService("go.micro.service.download", service.Client())
+	dlCli = dlProto.NewDownloadService("go.micro.service.download", cli)
 }
 
 // 响应注册页面
@@ -52,7 +62,7 @@ func DoSignupHandler(c *gin.Context) {
 	resp, err := userCli.Signup(context.TODO(), &userProto.ReqSignup{
 		Username: username,
 		Password: passwd,
-	})
+	}, cfg.RpcOpts)
 
 	if err != nil {
 		log.Println(err.Error())
@@ -80,7 +90,7 @@ func DoSigninHandler(c *gin.Context) {
 	rpcResp, err := userCli.Signin(context.TODO(), &userProto.ReqSignin{
 		Username: username,
 		Password: password,
-	})
+	}, cfg.RpcOpts)
 	if err != nil {
 		log.Println(err.Error())
 		c.Status(http.StatusInternalServerError)
@@ -142,7 +152,7 @@ func UserInfoHandler(c *gin.Context)  {
 	// 2.查询用户信息
 	resp, err := userCli.UserInfo(context.TODO(), &userProto.ReqUserInfo{
 		Username: username,
-	})
+	}, cfg.RpcOpts)
 	if err != nil {
 		log.Println(err.Error())
 		c.Status(http.StatusInternalServerError)

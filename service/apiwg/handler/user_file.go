@@ -7,6 +7,7 @@ import (
 	"context"
 	userProto "filestore-hsz/service/account/proto"
 	"log"
+	cfg "filestore-hsz/config"
 )
 
 // 查询批量的文件元信息
@@ -18,8 +19,8 @@ func FileQueryHandler(c *gin.Context)  {
 
 	rpcResp, err := userCli.UserFiles(context.TODO(), &userProto.ReqUserFile{
 		Username: username,
-		Limit: int32(limitCnt),
-	})
+		Limit:    int32(limitCnt),
+	}, cfg.RpcOpts)
 	if err != nil {
 		log.Println(err.Error())
 		c.Status(http.StatusInternalServerError)
@@ -39,8 +40,9 @@ func FileMetaUpdateHandler(c *gin.Context)  {
 
 	opType := c.Request.FormValue("op")
 	fileSha1 := c.Request.FormValue("filehash")
-	newFileName := c.Request.FormValue("filename")
+	newFileName := c.Request.FormValue("newfilename")
 	username := c.Request.FormValue("username")
+	oldFilename := c.Request.FormValue("oldfilename")
 
 	if opType != "0" || len(newFileName) < 1 {
 		c.Status(http.StatusForbidden)
@@ -51,6 +53,7 @@ func FileMetaUpdateHandler(c *gin.Context)  {
 		Username: username,
 		Filehash: fileSha1,
 		NewFileName: newFileName,
+		OldFilename: oldFilename,
 	})
 	if err != nil {
 		log.Println(err.Error())
@@ -58,7 +61,7 @@ func FileMetaUpdateHandler(c *gin.Context)  {
 		return
 	}
 	if len(rpcResp.FileData) <= 0 {
-		rpcResp.FileData = []byte("[]")
+		rpcResp.FileData = []byte("[修改文件名成功]")
 	}
 	c.Data(http.StatusOK, "application/json", rpcResp.FileData)
 }
@@ -67,10 +70,12 @@ func FileMetaUpdateHandler(c *gin.Context)  {
 func FileDeleteHandler(c *gin.Context) {
 	fileSha1 := c.Request.FormValue("filehash")
 	username := c.Request.FormValue("username")
+	filename := c.Request.FormValue("filename")
 	// context.TODO返回一个非nil的空上下文。代码应该使用上下文。当不清楚要使用哪个上下文或者上下文还不可用(因为周围的函数还没有扩展到接受上下文参数)时，可以使用TODO。
 	rpcResp, err := userCli.UserFileDelete(context.TODO(), &userProto.ReqUserFileDelete{
 		Username: username,
 		Filehash: fileSha1,
+		Filename: filename,
 	})
 
 	if err != nil {

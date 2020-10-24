@@ -3,11 +3,11 @@ package route
 import (
 	"filestore-hsz/service/apiwg/handler"
 	"github.com/gin-gonic/gin"
-	"github.com/gin-contrib/cors"
 	"net/http"
 	"github.com/elazarl/go-bindata-assetfs"
 	"filestore-hsz/assets"
 	"strings"
+	"github.com/gin-contrib/cors"
 )
 
 type binaryFileSystem struct {
@@ -42,7 +42,6 @@ func BinaryFileSystem(root string) *binaryFileSystem {
 }
 
 
-
 // 网关api
 func Router() *gin.Engine {
 	router := gin.Default()
@@ -58,20 +57,19 @@ func Router() *gin.Engine {
 	router.GET("/user/signin", handler.SigninHandler)
 	router.POST("/user/signin", handler.DoSigninHandler)
 
-	// 使用gin插件支持扩域请求
 	router.Use(cors.New(cors.Config{
-		AllowOrigins:  []string{"*"}, // []string{"http://localhost:8080"},
-		AllowMethods:  []string{"GET", "POST", "OPTIONS"},
-		AllowHeaders:  []string{"Origin", "Range", "x-requested-with", "content-Type"},
-		ExposeHeaders: []string{"Content-Length", "Accept-Ranges", "Content-Range", "Content-Disposition"},
-		// AllowCredentials: true,
+		AllowOrigins: []string{"*"}, // []string{"http://localhost:8080"}
+		AllowMethods: []string{"GET", "POST", "OPTIONS"},
+		AllowHeaders: []string{"Origin", "Range", "x-requested-with", "content-Type"},
+		ExposeHeaders: []string{"Content-Length", "Accept-Range", "Content-Range", "Content-Disposition"},
+		//AllowCredentials: true,
 	}))
 
 	// token验证中间件
-	//router.Use(middleware.HTTPInterceptor())
+	router.Use(handler.HTTPInterceptor())
 
 	// 用户查询
-	router.POST("/user/info", handler.UserInfoHandler)
+	router.GET("/user/info", handler.UserInfoHandler)
 	// 用户文件查询
 	router.POST("/file/query", handler.FileQueryHandler)
 	// 用户文件修改(重命名)

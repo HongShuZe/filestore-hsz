@@ -17,7 +17,7 @@ const (
 
 var (
 	// rabbitmq服务入口url
-	RabbitURL = "amqp://guest:guest@127.0.0.1:5672/"
+	RabbitURL = "amqp://guest:guest@192.168.20.143:5672/"
 )
 
 

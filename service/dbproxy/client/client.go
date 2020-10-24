@@ -8,6 +8,7 @@ import (
 	"filestore-hsz/service/dbproxy/orm"
 	"encoding/json"
 	"github.com/mitchellh/mapstructure"
+	cfg "filestore-hsz/config"
 )
 
 // 文件元信息结构
@@ -44,7 +45,7 @@ func TableFileToFileMeta(tfile orm.TableFile) FileMeta {
 
 // execAction : 向dbproxy请求执行action
 func execAction(funcName string, paramJson []byte) (*dbProto.RespExec, error) {
-	//
+	// todo 在调用该包函数时要先初始化dbCli,即调用Init()
 	return dbCli.ExecuteAction(context.TODO(), &dbProto.ReqExec{
 		Action: []*dbProto.SingleAction{
 			&dbProto.SingleAction{
@@ -52,7 +53,7 @@ func execAction(funcName string, paramJson []byte) (*dbProto.RespExec, error) {
 				Params: paramJson,
 			},
 		},
-	})
+	}, cfg.RpcOpts)
 }
 
 // parseBody : 转换rpc返回的结果
@@ -178,15 +179,15 @@ func OnUserFileUploadFinished(username string, fmeta FileMeta) (*orm.ExecResult,
 }
 
 // 用户文件重命名
-func RenameFileName(username, filehash, filename string) (*orm.ExecResult, error) {
-	uInfo, _ := json.Marshal([]interface{}{username, filehash, filename})
+func RenameFileName(username, filehash, filename, filenameOld string) (*orm.ExecResult, error) {
+	uInfo, _ := json.Marshal([]interface{}{username, filehash, filename, filenameOld})
 	res, err := execAction("/ufile/RenameFileName", uInfo)
 	return parseBody(res), err
 }
 
 // 删除用户文件(标记删除)
-func DeleteUserFile(username, filehash string) (*orm.ExecResult, error) {
-	uInfo, _ := json.Marshal([]interface{}{username, filehash})
+func DeleteUserFile(username, filehash, filename string) (*orm.ExecResult, error) {
+	uInfo, _ := json.Marshal([]interface{}{username, filehash, filename})
 	res, err := execAction("/ufile/DeleteUserFile", uInfo)
 	return parseBody(res), err
 }
@@ -208,7 +209,7 @@ func GetUserToken(username string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	//log.Printf("GetUserToken: %+v\n", data)
+	log.Printf("GetUserToken: %+v\n", data)
 	return data["token"], nil
 }
 

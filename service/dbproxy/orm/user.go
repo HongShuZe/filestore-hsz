@@ -15,7 +15,6 @@ func UserSignup(username string, passwd string) (res ExecResult) {
 		res.Msg = err.Error()
 		return
 	}
-
 	defer stmt.Close()
 
 	ret, err := stmt.Exec(username, passwd)
@@ -39,7 +38,7 @@ func UserSignin(username string, encpwd string) (res ExecResult) {
 	stmt, err := mydb.DBConn().Prepare(
 		"select * from tbl_user where user_name=? limit 1")
 	if err != nil {
-		log.Println("usersign" + err.Error())
+		log.Println("usersign:" + err.Error())
 		res.Suc = false
 		res.Msg = err.Error()
 		return

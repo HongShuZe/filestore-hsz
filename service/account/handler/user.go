@@ -9,6 +9,7 @@ import (
 	"filestore-hsz/common"
 	cfg "filestore-hsz/config"
 	dbCli "filestore-hsz/service/dbproxy/client"
+	"log"
 )
 
 // User用于实现UserServiceHandler接口的对象
@@ -52,6 +53,9 @@ func (u *User) Signin(ctx context.Context, req *proto.ReqSignin, res *proto.Resp
 	username := req.Username
 	password := req.Password
 	encPasswd := util.Sha1([]byte(password + cfg.PasswordSalt))
+
+	log.Println("username:"+ username)
+	log.Println("passwd:"+encPasswd)
 
 	// 1.校验用户名及密码
 	dbResp, err := dbCli.UserSignin(username, encPasswd)

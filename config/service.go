@@ -18,7 +18,6 @@ const (
 // 配置conusl
 func RegistryConsul() registry.Registry {
 	return consul.NewRegistry(
-		//
 		registry.Addrs("192.168.20.143:8500"),
 	)
 }

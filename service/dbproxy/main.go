@@ -10,6 +10,7 @@ import (
 	"github.com/micro/cli"
 	c1 "filestore-hsz/config"
 	"filestore-hsz/service/dbproxy/config"
+	dbConn "filestore-hsz/service/dbproxy/conn"
 )
 
 func startRPCService()  {
@@ -26,10 +27,12 @@ func startRPCService()  {
 			dbhost := c.String("dbhost")
 			if len(dbhost) > 0 {
 				log.Println("custom db address: " + dbhost)
-				config.UpdataDBHost(dbhost)
+				config.UpdateDBHost(dbhost)
 			}
 		}),
 	)
+
+	dbConn.InitDBConn()
 
 	dbProxy.RegisterDBProxyServiceHandler(service.Server(), new(dbRpc.DBProxy))
 	if err := service.Run(); err != nil {

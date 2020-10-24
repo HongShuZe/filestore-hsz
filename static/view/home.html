@@ -80,7 +80,7 @@
         var username = document.getElementById('username');
         $.ajax({
             url: "/user/info?" + queryParams(),
-            type: "POST",
+            type: "GET",
             error: function(err) {
                 alert(JSON.stringify(err));
             },
@@ -120,7 +120,7 @@
                     return;
                 }
 
-                var dlHost = 'http://localhost:8080';
+                var dlHost = 'http://localhost:38080';
                 var dlEntry = localStorage.getItem('downloadEntry');
                 if (dlEntry != '') {
                     dlHost = 'http://' + dlEntry;
@@ -130,12 +130,12 @@
                     'onClick = "downloadFile(\'' + dlHost + '/file/downloadurl?filehash={0}&{1}\')">下载</button>';
                 var renameFileHtml = '<button class="btn btn-warning home-button" ' +
                     'onClick = "renameFile(\'{0}\',\'{1}\',\'' + serverHost + '/file/' +
-                    'update?op=0&filehash={2}&{3}\')">重命名</button>';
+                    'update?op=0&filehash={2}&{3}&oldfilename={4}\')">重命名</button>';
                 var cdlFileHtml = '<button class="btn btn-info home-button" ' +
                     'onClick = "cdlFile(\'' + dlHost + '/file/download/range?filehash={0}&{1}\')">断点下载</button>';
 
                 var deleteFileHtml = '<button class="btn btn-info home-button" ' +
-                        'onclick="delFile(\''+ serverHost+ '/file/delete?filehash={0}&{1}\',\'{2}\')">删除</button>';
+                        'onclick="delFile(\''+ serverHost+ '/file/delete?filehash={0}&{1}&filename={2}\',\'{3}\')">删除</button>';
 
                 for (var i = 0; i < data.length; i++) {
                     var x = document.getElementById('filetbl').insertRow();
@@ -157,8 +157,8 @@
                     cell = x.insertCell();
                     cell.innerHTML = downloadHtml.format(data[i].FileHash, queryParams()) +
                                      cdlFileHtml.format(data[i].FileHash, queryParams()) +
-                                     renameFileHtml.format(data[i].FileHash, data[i].FileName, data[i].FileHash, queryParams()) +
-                                     deleteFileHtml.format(data[i].FileHash, queryParams(), data[i].FileName);
+                                     renameFileHtml.format(data[i].FileHash, data[i].FileName, data[i].FileHash, queryParams(), data[i].FileName) +
+                                     deleteFileHtml.format(data[i].FileHash, queryParams(), data[i].FileName, data[i].FileName);
                 }
             }
         });
@@ -228,7 +228,7 @@
         }
 
         $.ajax({
-            url: renameUrl + "&filename=" + newFileName,
+            url: renameUrl + "&newfilename=" + newFileName,
             type: "POST",
             error: function(msg) {
                 alert(msg);

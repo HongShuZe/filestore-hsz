@@ -30,7 +30,7 @@ func (u *User) UserFiles(ctx context.Context, req *proto.ReqUserFile, res *proto
 
 // 用户文件重命名
 func (u *User) UserFileRename(ctx context.Context, req *proto.ReqUserFileRename, res *proto.RespUserFileRename) error {
-	dbResp, err := dbCli.RenameFileName(req.Username, req.Filehash, req.NewFileName)
+	dbResp, err := dbCli.RenameFileName(req.Username, req.Filehash, req.NewFileName, req.OldFilename)
 	if err != nil || !dbResp.Suc {
 		res.Code = common.StatusServerError
 		return err
@@ -49,7 +49,7 @@ func (u *User) UserFileRename(ctx context.Context, req *proto.ReqUserFileRename,
 
 // 删除用户文件
 func (u *User) UserFileDelete(ctx context.Context, req *proto.ReqUserFileDelete, res *proto.RespUserFileDelete) error {
-	dbResp, err := dbCli.DeleteUserFile(req.Username, req.Filehash)
+	dbResp, err := dbCli.DeleteUserFile(req.Username, req.Filehash, req.Filename)
 	if err != nil || !dbResp.Suc {
 		res.Code = common.StatusServerError
 		return err

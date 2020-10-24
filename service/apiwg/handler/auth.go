@@ -1,4 +1,4 @@
-package middleware
+package handler
 
 import (
 	"net/http"
@@ -8,6 +8,8 @@ import (
 	"time"
 	"log"
 	dbCli "filestore-hsz/service/dbproxy/client"
+	"github.com/micro/go-micro"
+	"filestore-hsz/config"
 )
 
 // http请求拦截器
@@ -27,30 +29,35 @@ func HTTPInterceptor() gin.HandlerFunc {
 				nil,
 			)
 			c.JSON(http.StatusOK, resp)
-			return
 		}
 		c.Next()
 	}
 }
 
 // token是否有效
-func IsTokenValid(token, username string) bool {
+func IsTokenValid(token string, username string) bool {
 	if len(token) != 40 {
-		log.Println("token invalid:" + token)
+		log.Println("token invalid: " + token)
 		return false
 	}
 	// 判断token的时效性， 是否过期
 	// 假设token的有效期为1天
 	tokenTS := token[32:40]
 	if util.Hex2Dec(tokenTS) < time.Now().Unix()-86400 {
-		log.Println("token expired" + token)
+		log.Println("token expired: " + token)
 		return false
 	}
 
+	// 先初始化dbCli
+	service := micro.NewService(
+		micro.Registry(config.RegistryConsul()),
+	)
+	service.Init()
+	dbCli.Init(service)
 	// 从数据库表tbl_user_token查询username对应的token信息
 	// 对比两个token是否一致
 	dbToken, err := dbCli.GetUserToken(username)
-	if err != nil || dbToken != token{
+	if err != nil || dbToken != token {
 		return false
 	}
 

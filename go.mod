@@ -14,9 +14,12 @@ require (
 	github.com/gomodule/redigo v1.8.0 // indirect
 	github.com/json-iterator/go v1.1.9
 	github.com/jteeuwen/go-bindata v3.0.7+incompatible // indirect
+	github.com/juju/ratelimit v1.0.1
 	github.com/micro/cli v0.2.0
 	github.com/micro/go-micro v1.18.0
 	github.com/micro/go-plugins/registry/consul v0.0.0-20200119172437-4fe21aa238fd
+	github.com/micro/go-plugins/wrapper/breaker/hystrix v0.0.0-20200119172437-4fe21aa238fd
+	github.com/micro/go-plugins/wrapper/ratelimiter/ratelimit v0.0.0-20200119172437-4fe21aa238fd
 	github.com/mitchellh/mapstructure v1.1.2
 	github.com/moxiaomomo/go-bindata-assetfs v1.0.0 // indirect
 	github.com/streadway/amqp v0.0.0-20200108173154-1c71cc93ed71

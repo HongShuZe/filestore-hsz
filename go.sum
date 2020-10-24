@@ -25,6 +25,8 @@ github.com/Microsoft/hcsshim v0.8.7-0.20191101173118-65519b62243c/go.mod h1:7xhj
 github.com/OpenDNS/vegadns2client v0.0.0-20180418235048-a3fa4a771d87/go.mod h1:iGLljf5n9GjT6kc0HBvyI1nOKnGQbNB66VzSNbK5iks=
 github.com/Shopify/sarama v1.19.0/go.mod h1:FVkBWblsNy7DGZRfXLU0O9RCGt5g3g3yEuWXgklEdEo=
 github.com/Shopify/toxiproxy v2.1.4+incompatible/go.mod h1:OXgGpZ6Cli1/URJOF1DMxUHB2q5Ap20/P/eIdh4G0pI=
+github.com/afex/hystrix-go v0.0.0-20180502004556-fa1af6a1f4f5 h1:rFw4nCn9iMW+Vajsk51NtYIcwSTkXr+JGrMd36kTDJw=
+github.com/afex/hystrix-go v0.0.0-20180502004556-fa1af6a1f4f5/go.mod h1:SkGFH1ia65gfNATL8TAiHDNxPzPdmEL5uirI2Uyuz6c=
 github.com/akamai/AkamaiOPEN-edgegrid-golang v0.9.0/go.mod h1:zpDJeKyp9ScW4NNrbdr+Eyxvry3ilGPewKoXw3XGN1k=
 github.com/alangpierce/go-forceexport v0.0.0-20160317203124-8f1d6941cd75/go.mod h1:uAXEEpARkRhCZfEvy/y0Jcc888f9tHCc1W7/UeEtreE=
 github.com/alcortesm/tgz v0.0.0-20161220082320-9c5fe88206d7/go.mod h1:6zEj6s6u/ghQa61ZWa/C2Aw3RkjiTBOix7dkqa1VLIs=
@@ -253,6 +255,8 @@ github.com/jstemmer/go-junit-report v0.0.0-20190106144839-af01ea7f8024/go.mod h1
 github.com/jteeuwen/go-bindata v3.0.7+incompatible h1:91Uy4d9SYVr1kyTJ15wJsog+esAZZl7JmEfTkwmhJts=
 github.com/jteeuwen/go-bindata v3.0.7+incompatible/go.mod h1:JVvhzYOiGBnFSYRyV00iY8q7/0PThjIYav1p9h5dmKs=
 github.com/jtolds/gls v4.20.0+incompatible/go.mod h1:QJZ7F/aHp+rZTRtaJ1ow/lLfFfVYBRgL+9YlvaHOwJU=
+github.com/juju/ratelimit v1.0.1 h1:+7AIFJVQ0EQgq/K9+0Krm7m530Du7tIz0METWzN0RgY=
+github.com/juju/ratelimit v1.0.1/go.mod h1:qapgC/Gy+xNh9UxzV13HGGl/6UXNN+ct+vwSgWNm/qk=
 github.com/julienschmidt/httprouter v1.2.0/go.mod h1:SYymIcj16QtmaHHD7aYtjjsJG7VTCxuUUipMqKk8s4w=
 github.com/kevinburke/ssh_config v0.0.0-20190725054713-01f96b0aa0cd/go.mod h1:CT57kijsi8u/K/BOFA39wgDQJ9CxiF4nAY/ojJ6r6mM=
 github.com/kisielk/errcheck v1.1.0/go.mod h1:EZBBE59ingxPouuu3KfxchcWSUPOHkagtvWXihfKN4Q=
@@ -302,6 +306,10 @@ github.com/micro/go-micro v1.18.0/go.mod h1:klwUJL1gkdY1MHFyz+fFJXn52dKcty4hoe95
 github.com/micro/go-plugins v1.5.1 h1:swcFD7ynCTUo98APqIEIbPu2XMd6yVGTnI8PqdnCwOQ=
 github.com/micro/go-plugins/registry/consul v0.0.0-20200119172437-4fe21aa238fd h1:q5pybBgihtxJ+I68Vh51MJXcTGoV9jy58HkDryCLnb4=
 github.com/micro/go-plugins/registry/consul v0.0.0-20200119172437-4fe21aa238fd/go.mod h1:bkvNpEhsto1LZTuTcDZzfngUYBE7cHBxQJNdUOJJaMY=
+github.com/micro/go-plugins/wrapper/breaker/hystrix v0.0.0-20200119172437-4fe21aa238fd h1:Eb069S90V831jW0mEyzul5D7RwyLSbY/EgrwLRfC6E8=
+github.com/micro/go-plugins/wrapper/breaker/hystrix v0.0.0-20200119172437-4fe21aa238fd/go.mod h1:csTzCS+fhYRYcAOF9NQEn6NxafX0aDLZA6VeCCQLrnI=
+github.com/micro/go-plugins/wrapper/ratelimiter/ratelimit v0.0.0-20200119172437-4fe21aa238fd h1:L7ail/aqOTYjkDx4dT25SQZQP9s5EOj6FZFRGLfsaIQ=
+github.com/micro/go-plugins/wrapper/ratelimiter/ratelimit v0.0.0-20200119172437-4fe21aa238fd/go.mod h1:SefON+3udrq7ySVSlQekeZ4DrLyq28R7mT1VL3hFT6k=
 github.com/micro/mdns v0.3.0 h1:bYycYe+98AXR3s8Nq5qvt6C573uFTDPIYzJemWON0QE=
 github.com/micro/mdns v0.3.0/go.mod h1:KJ0dW7KmicXU2BV++qkLlmHYcVv7/hHnbtguSWt9Aoc=
 github.com/micro/protobuf v0.0.0-20180321161605-ebd3be6d4fdb h1:7X2fjfHGQUGIqA6PwBpPChDIRrnB0Y0zD0ox3Cqg/Bs=

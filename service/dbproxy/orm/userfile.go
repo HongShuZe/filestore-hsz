@@ -44,6 +44,7 @@ func QueryUserFileMetas(username string, limit int64) (res ExecResult) {
 
 	rows, err := stmt.Query(username, limit)
 	if err != nil {
+		log.Println(err.Error())
 		res.Suc = false
 		res.Msg = err.Error()
 		return
@@ -66,9 +67,9 @@ func QueryUserFileMetas(username string, limit int64) (res ExecResult) {
 }
 
 // 删除文件（标记删除）
-func DeleteUserFile(username, filehash string) (res ExecResult) {
+func DeleteUserFile(username, filehash, filename string) (res ExecResult) {
 	stmt, err := mydb.DBConn().Prepare(
-		"update tbl_user_file set status=2 where user_name=? and file_sha1=? limit 1")
+		"update tbl_user_file set status=2 where user_name=? and file_sha1=? and file_name=? limit 1")
 	if err != nil {
 		log.Println(err.Error())
 		res.Suc = false
@@ -77,7 +78,7 @@ func DeleteUserFile(username, filehash string) (res ExecResult) {
 	}
 	defer stmt.Close()
 
-	_, err = stmt.Exec(username, filehash)
+	_, err = stmt.Exec(username, filehash, filename)
 	if err != nil {
 		log.Println(err.Error())
 		res.Suc = false
@@ -89,9 +90,9 @@ func DeleteUserFile(username, filehash string) (res ExecResult) {
 }
 
 // 文件重命名
-func RenameFileName(username, filehash, filename string) (res ExecResult) {
+func RenameFileName(username, filehash, filename, filenameOld string) (res ExecResult) {
 	stmt, err := mydb.DBConn().Prepare(
-		"update tbl_user_file set file_name=? where user_name=? and file_sha1=? limit 1")
+		"update tbl_user_file set file_name=? where user_name=? and file_sha1=? and status=0 and file_name=? limit 1")
 	if err != nil {
 		log.Println(err.Error())
 		res.Suc = false
@@ -100,7 +101,7 @@ func RenameFileName(username, filehash, filename string) (res ExecResult) {
 	}
 	defer stmt.Close()
 
-	_, err = stmt.Exec(filename, username, filehash)
+	_, err = stmt.Exec(filename, username, filehash, filenameOld)
 	if err != nil {
 		log.Println(err.Error())
 		res.Suc = false

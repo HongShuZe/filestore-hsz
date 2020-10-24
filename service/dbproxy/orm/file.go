@@ -3,7 +3,6 @@ package orm
 import (
 	"database/sql"
 	mydb "filestore-hsz/service/dbproxy/conn"
-	"fmt"
 	"log"
 )
 
@@ -105,21 +104,20 @@ func GetFileMetaList(limit int64) (res ExecResult) {
 		return
 	}
 
-	columns, _ := rows.Columns()
-	values := make([]sql.RawBytes, len(columns))
+	//columns, _ := rows.Columns()
+	//values := make([]sql.RawBytes, len(columns))
 	var tfiles []TableFile
-	for i := 0; i < len(values) && rows.Next(); i++ {
+	for i := 0; rows.Next(); i++ {
 		tfile := TableFile{}
 		err = rows.Scan(&tfile.FileHash, &tfile.FileAddr,
 			&tfile.FileName, &tfile.FileSize)
-
 		if err != nil {
 			log.Println(err.Error())
 			break
 		}
 		tfiles = append(tfiles, tfile)
 	}
-	fmt.Println(len(tfiles))
+	//fmt.Println(len(tfiles))
 	res.Suc = true
 	res.Data = tfiles
 	return

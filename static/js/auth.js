@@ -1,4 +1,4 @@
-// var serverHost = "http://<你的实际ip地址>:8080";
+// var serverHost = "http://<你的实际ip地址>:8080";使用traefik时要改为"http://apiwg.fileserver.com"
 var serverHost = "http://127.0.0.1:8080";
 
 function queryParams() {
