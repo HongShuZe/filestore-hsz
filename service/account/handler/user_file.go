@@ -10,7 +10,7 @@ import (
 
 // 获取用户文件列表
 func (u *User) UserFiles(ctx context.Context, req *proto.ReqUserFile, res *proto.RespUserFile) error {
-	dbResp, err := dbCli.QueryUserFileMetas(req.Username, int(req.Limit))
+	dbResp, err := dbCli.QueryUserFileMetas(req.Username, int(req.Status),int(req.Limit))
 	if err != nil || !dbResp.Suc {
 		res.Code = common.StatusServerError
 		return err
@@ -49,7 +49,7 @@ func (u *User) UserFileRename(ctx context.Context, req *proto.ReqUserFileRename,
 
 // 删除用户文件
 func (u *User) UserFileDelete(ctx context.Context, req *proto.ReqUserFileDelete, res *proto.RespUserFileDelete) error {
-	dbResp, err := dbCli.DeleteUserFile(req.Username, req.Filehash, req.Filename)
+	dbResp, err := dbCli.DeleteUserFile(int(req.Status), req.Username, req.Filehash, req.Filename)
 	if err != nil || !dbResp.Suc {
 		res.Code = common.StatusServerError
 		return err

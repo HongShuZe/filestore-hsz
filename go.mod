@@ -7,7 +7,7 @@ require (
 	github.com/elazarl/go-bindata-assetfs v1.0.1
 	github.com/garyburd/redigo v1.6.0
 	github.com/gin-contrib/cors v1.3.1
-	github.com/gin-gonic/contrib v0.0.0-20200810162008-6dee08bf958e
+	github.com/gin-gonic/contrib v0.0.0-20200810162008-6dee08bf958e // indirect
 	github.com/gin-gonic/gin v1.6.2
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/golang/protobuf v1.4.0

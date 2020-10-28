@@ -76,6 +76,10 @@ func Router() *gin.Engine {
 	router.POST("/file/update", handler.FileMetaUpdateHandler)
 	// 用户文件删除
 	router.POST("/file/delete", handler.FileDeleteHandler)
+	// 用户已删除文件查询
+	router.POST("/file/deleted/query", handler.FileQueryDeletedHandler)
+	// 用户文件删除
+	router.POST("/file/recover", handler.FileRecoverHandler)
 
 	return router
 }

@@ -9,11 +9,11 @@ service UserService {
     rpc Signin(ReqSignin) returns (RespSignin) {}
     // 获取用户信息
     rpc UserInfo(ReqUserInfo) returns (RespUserInfo) {}
-    // 获取用户文件
+    // 获取用户文件/用户已删除文件
     rpc UserFiles(ReqUserFile) returns (RespUserFile) {}
     // 用户文件重命名
     rpc UserFileRename(ReqUserFileRename) returns (RespUserFileRename) {}
-    // 删除用户文件
+    // 删除/恢复用户文件
     rpc UserFileDelete(ReqUserFileDelete) returns (RespUserFileDelete) {}
 }
 
@@ -56,6 +56,7 @@ message RespUserInfo {
 message ReqUserFile {
     string username = 1;
     int32 limit = 2;
+    int32 status = 3;
 }
 
 message RespUserFile {
@@ -81,6 +82,7 @@ message ReqUserFileDelete {
     string username = 1;
     string filehash = 2;
     string filename = 3;
+    int32 status = 4;
 }
 
 message RespUserFileDelete {

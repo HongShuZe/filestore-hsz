@@ -163,9 +163,9 @@ func QueryUserFileMeta(username, filehash string) (*orm.ExecResult, error) {
 	res, err := execAction("/ufile/QueryUserFileMeta", uInfo)
 	return parseBody(res), err
 }
-
-func QueryUserFileMetas(username string, limit int) (*orm.ExecResult, error) {
-	uInfo, _ := json.Marshal([]interface{}{username, limit})
+//批量获取用户文件/用户已删除文件
+func QueryUserFileMetas(username string, status,limit int) (*orm.ExecResult, error) {
+	uInfo, _ := json.Marshal([]interface{}{username, status, limit})
 	res, err := execAction("/ufile/QueryUserFileMetas", uInfo)
 	return parseBody(res), err
 }
@@ -185,9 +185,9 @@ func RenameFileName(username, filehash, filename, filenameOld string) (*orm.Exec
 	return parseBody(res), err
 }
 
-// 删除用户文件(标记删除)
-func DeleteUserFile(username, filehash, filename string) (*orm.ExecResult, error) {
-	uInfo, _ := json.Marshal([]interface{}{username, filehash, filename})
+// 删除/恢复用户文件(标记删除)
+func DeleteUserFile(status int, username, filehash, filename string) (*orm.ExecResult, error) {
+	uInfo, _ := json.Marshal([]interface{}{username, filehash, filename, status})
 	res, err := execAction("/ufile/DeleteUserFile", uInfo)
 	return parseBody(res), err
 }

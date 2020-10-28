@@ -40,11 +40,11 @@ type UserService interface {
 	Signin(ctx context.Context, in *ReqSignin, opts ...client.CallOption) (*RespSignin, error)
 	// 获取用户信息
 	UserInfo(ctx context.Context, in *ReqUserInfo, opts ...client.CallOption) (*RespUserInfo, error)
-	// 获取用户文件
+	// 获取用户文件/用户已删除文件
 	UserFiles(ctx context.Context, in *ReqUserFile, opts ...client.CallOption) (*RespUserFile, error)
 	// 用户文件重命名
 	UserFileRename(ctx context.Context, in *ReqUserFileRename, opts ...client.CallOption) (*RespUserFileRename, error)
-	// 删除用户文件
+	// 删除/恢复用户文件
 	UserFileDelete(ctx context.Context, in *ReqUserFileDelete, opts ...client.CallOption) (*RespUserFileDelete, error)
 }
 
@@ -135,11 +135,11 @@ type UserServiceHandler interface {
 	Signin(context.Context, *ReqSignin, *RespSignin) error
 	// 获取用户信息
 	UserInfo(context.Context, *ReqUserInfo, *RespUserInfo) error
-	// 获取用户文件
+	// 获取用户文件/用户已删除文件
 	UserFiles(context.Context, *ReqUserFile, *RespUserFile) error
 	// 用户文件重命名
 	UserFileRename(context.Context, *ReqUserFileRename, *RespUserFileRename) error
-	// 删除用户文件
+	// 删除/恢复用户文件
 	UserFileDelete(context.Context, *ReqUserFileDelete, *RespUserFileDelete) error
 }
 

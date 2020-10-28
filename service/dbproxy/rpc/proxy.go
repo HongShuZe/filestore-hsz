@@ -25,7 +25,6 @@ func (db *DBProxy) ExecuteAction(ctx context.Context, req *dbProxy.ReqExec, res 
 				Suc: false,
 				Msg: "请求球参数有误",
 			}
-			//fmt.Println("ExecuteAction, err1:"+err.Error())
 			continue
 		}
 
@@ -41,7 +40,6 @@ func (db *DBProxy) ExecuteAction(ctx context.Context, req *dbProxy.ReqExec, res 
 				Suc: false,
 				Msg: "函数调用有误",
 			}
-			//fmt.Println("ExecuteAction, err2:"+err.Error())
 			continue
 		}
 		resList[idx] = execRes[0].Interface().(orm.ExecResult)

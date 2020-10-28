@@ -30,10 +30,10 @@ func OnUserFileUploadFinished(username, filehash, filename string, filesize int6
 }
 
 // 批量获取用户文件信息
-func QueryUserFileMetas(username string, limit int64) (res ExecResult) {
+func QueryUserFileMetas(username string, status, limit int64) (res ExecResult) {
 	stmt, err := mydb.DBConn().Prepare(
 		"select file_sha1, file_name, file_size, upload_at," +
-			"last_update from tbl_user_file where user_name=? and status=0 limit ?")
+			"last_update from tbl_user_file where user_name=? and status=? limit ?")
 	if err != nil {
 		log.Println(err.Error())
 		res.Suc = false
@@ -42,7 +42,7 @@ func QueryUserFileMetas(username string, limit int64) (res ExecResult) {
 	}
 	defer stmt.Close()
 
-	rows, err := stmt.Query(username, limit)
+	rows, err := stmt.Query(username, status, limit)
 	if err != nil {
 		log.Println(err.Error())
 		res.Suc = false
@@ -67,9 +67,9 @@ func QueryUserFileMetas(username string, limit int64) (res ExecResult) {
 }
 
 // 删除文件（标记删除）
-func DeleteUserFile(username, filehash, filename string) (res ExecResult) {
+func DeleteUserFile(username, filehash, filename string, status int64) (res ExecResult) {
 	stmt, err := mydb.DBConn().Prepare(
-		"update tbl_user_file set status=2 where user_name=? and file_sha1=? and file_name=? limit 1")
+		"update tbl_user_file set status=? where user_name=? and file_sha1=? and file_name=? limit 1")
 	if err != nil {
 		log.Println(err.Error())
 		res.Suc = false
@@ -78,7 +78,7 @@ func DeleteUserFile(username, filehash, filename string) (res ExecResult) {
 	}
 	defer stmt.Close()
 
-	_, err = stmt.Exec(username, filehash, filename)
+	_, err = stmt.Exec(status, username, filehash, filename)
 	if err != nil {
 		log.Println(err.Error())
 		res.Suc = false
@@ -170,7 +170,6 @@ func IsUserFileUploaded(username string, filehash string) (res ExecResult) {
 	}
 	return
 }
-
 
 
 
