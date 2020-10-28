@@ -52,6 +52,8 @@
                             </button>
                             <button class="btn btn-primary home-button" onclick="toMPUploadFile()">分块上传文件
                             </button>
+                            <button class="btn btn-primary home-button" onclick="toRecycleBin()">回收站
+                            </button>
                             <div class="line-horizon"></div>
                         </div>
                         <div style="width:100%;">
@@ -65,6 +67,18 @@
                                         <th>最近更新</th>
                                         <th>操作</th>
                                     </tr>
+                                </thead>
+                            </table>
+                            <table id="filetbl1" style="margin-left:3%;width:96%;display: none;">
+                                <thead style="height:50px;border:1px;">
+                                <tr style="height:50px;border:1px;">
+                                    <th>文件hash</th>
+                                    <th>文件名</th>
+                                    <th>文件大小</th>
+                                    <th>上传时间</th>
+                                    <th>最近更新</th>
+                                    <th>操作</th>
+                                </tr>
                                 </thead>
                             </table>
                         </div>
@@ -173,6 +187,58 @@
         window.location.href = '/static/view/mpupload.html';
     }
 
+    function toRecycleBin() {
+        $.ajax({
+            url: "/file/deleted/query?" + queryParams(),
+            type: "POST",
+            data: {
+                limit: 15
+            },
+            error: function(err) {
+                alert(JSON.stringify(err));
+            },
+            success: function(body) {
+                if (!body) {
+                    return;
+                }
+                var data = body;
+                if (!data || data.length <= 0) {
+                    return;
+                }
+
+                var RecoverFileHtml = '<button class="btn btn-info home-button" ' +
+                        'onclick="RecoverFile(\''+ serverHost+ '/file/recover?filehash={0}&{1}&filename={2}\',\'{3}\')">还原</button>';
+
+                for (var i = 0; i < data.length; i++) {
+                    var x = document.getElementById('filetbl1').insertRow();
+                    var cell = x.insertCell();
+                    cell.innerHTML = data[i].FileHash.substr(0, 20) + "...";
+
+                    cell = x.insertCell();
+                    cell.innerHTML = data[i].FileName;
+
+                    cell = x.insertCell();
+                    cell.innerHTML = data[i].FileSize;
+
+                    cell = x.insertCell();
+                    cell.innerHTML = data[i].UploadAt;
+
+                    cell = x.insertCell();
+                    cell.innerHTML = data[i].LastUpdated;
+
+                    cell = x.insertCell();
+                    cell.innerHTML = RecoverFileHtml.format(data[i].FileHash, queryParams(), data[i].FileName, data[i].FileName);
+                }
+
+                document.getElementById('filetbl').style.display='none';
+                var r = document.getElementById('filetbl1');
+                if (r.style.display == "none") {
+                    r.style.display='block';
+                }
+            }
+        });
+    }
+
     function toLogout() {
         logout();
     }
@@ -255,6 +321,26 @@
             },
             success: function(body) {
                 alert("文件删除成功");
+                window.location.href = '/static/view/home.html';
+            }
+        });
+    }
+
+    function RecoverFile(url, filename) {
+        //弹出一个询问框，有确定和取消按钮
+        //利用对话框返回的值 （true 或者 false）
+        if (!confirm("你确定还原:"+ filename+" ？")) { // 用于显示一个带有指定消息和确认及取消按钮的对话框。
+            alert("取消还原");
+            return
+        }
+        $.ajax({
+            url: url ,
+            type: "POST",
+            error: function(msg) {
+                alert("文件还原失败:" + msg);
+            },
+            success: function(body) {
+                alert("文件已还原");
                 window.location.href = '/static/view/home.html';
             }
         });
