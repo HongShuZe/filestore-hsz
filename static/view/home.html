@@ -52,7 +52,7 @@
                             </button>
                             <button class="btn btn-primary home-button" onclick="toMPUploadFile()">分块上传文件
                             </button>
-                            <button class="btn btn-primary home-button" onclick="toRecycleBin()">回收站
+                            <button class="btn btn-primary home-button" id="hsz" onclick="toRecycleBin()">回收站
                             </button>
                             <div class="line-horizon"></div>
                         </div>
@@ -69,16 +69,16 @@
                                     </tr>
                                 </thead>
                             </table>
-                            <table id="filetbl1" style="margin-left:3%;width:96%;display: none;">
+                            <table id="filetbl1" style="margin-left:3%;width:96%;display:none;">
                                 <thead style="height:50px;border:1px;">
-                                <tr style="height:50px;border:1px;">
-                                    <th>文件hash</th>
-                                    <th>文件名</th>
-                                    <th>文件大小</th>
-                                    <th>上传时间</th>
-                                    <th>最近更新</th>
-                                    <th>操作</th>
-                                </tr>
+                                    <tr style="height:50px;border:1px;">
+                                        <th width="20%">文件hash</th>
+                                        <th width="20%">文件名</th>
+                                        <th width="20%">文件大小</th>
+                                        <th width="20%">上传时间</th>
+                                        <th width="20%">最近更新</th>
+                                        <th width="20%">操作</th>
+                                    </tr>
                                 </thead>
                             </table>
                         </div>
@@ -229,7 +229,7 @@
                     cell = x.insertCell();
                     cell.innerHTML = RecoverFileHtml.format(data[i].FileHash, queryParams(), data[i].FileName, data[i].FileName);
                 }
-
+                // 隐藏查询全部用户文件,显示已删除用户文件
                 document.getElementById('filetbl').style.display='none';
                 var r = document.getElementById('filetbl1');
                 if (r.style.display == "none") {
@@ -237,7 +237,12 @@
                 }
             }
         });
+        // 回收站按钮只能点击一次
+        document.getElementById('hsz').onclick=function(){
+            this.disabled();
+        };
     }
+
 
     function toLogout() {
         logout();
